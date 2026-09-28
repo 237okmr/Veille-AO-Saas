@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cameroon Marchés Publics - Veille & Alertes AO</title>
+    <meta name="description" content="Plateforme SaaS intelligente de veille et de ciblage des appels d'offres publics camerounais (ARMP, DGTCFM, Ministères, Collectivités)." />
+    <meta property="og:title" content="Cameroon Marchés Publics - Veille & Alertes AO" />
+    <meta property="og:description" content="Plateforme SaaS intelligente de veille et de ciblage des appels d'offres publics camerounais (ARMP, DGTCFM, Ministères, Collectivités)." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      try {
+        const theme = localStorage.getItem('cam_marches_theme_v3');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
+  </head>
+  <body class="h-full bg-white text-slate-900 antialiased font-sans selection:bg-teal-500/20 selection:text-teal-700">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

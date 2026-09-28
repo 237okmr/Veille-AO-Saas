@@ -1,0 +1,6 @@
+{
+  "name": "Cameroon Marchés Publics - Veille & Alertes AO",
+  "description": "Plateforme SaaS intelligente de veille et de ciblage des appels d'offres publics camerounais (ARMP, DGTCFM, Ministères, Collectivités).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
