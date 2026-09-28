@@ -311,6 +311,42 @@ export interface ApiConfigInfo {
   version: string;
 }
 
+export interface ReglagesProxyEtat {
+  mode: 'OFF' | 'OBSERVE' | 'ENFORCE';
+  secretPresent: boolean;
+  rapport6h: {
+    ok: number;
+    ko: number;
+    detail: { heure: string; ok: number; ko: number }[];
+  };
+}
+
+export interface ReglagesParametres {
+  Email_Admin_Logs?: string;
+  Email_Reply_To?: string;
+  Seuil_Score_Pertinence_Min?: number | string;
+  Fenetre_Veille_Heures?: number | string;
+  Heure_Collecte_Nuit?: string;
+  Heure_Envoi_Matin?: string;
+  Activer_Reporting?: 'OUI' | 'NON' | string;
+  Seuil_Alerte_Quota_Emails?: number | string;
+  Activer_Fallback_DeepSeek?: 'OUI' | 'NON' | string;
+}
+
+export interface ReglagesCleApiInfo {
+  nbCles: number;
+  masquees: string[];
+}
+
+export interface ReglagesData {
+  proxy: ReglagesProxyEtat;
+  parametres: ReglagesParametres;
+  clesApi: {
+    Cle_API_IA: ReglagesCleApiInfo;
+    Cle_API_IA_DeepSeek: ReglagesCleApiInfo;
+  };
+}
+
 export interface AlertFilterOptions {
   statut?: string;
   etat?: string;

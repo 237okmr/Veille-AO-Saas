@@ -11,6 +11,7 @@ import {
   Activity,
   History,
   Lock,
+  Settings,
   Sparkles,
   FileSpreadsheet,
   Zap,
@@ -49,7 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'admin-users', label: 'Comptes utilisateurs', icon: Users },
     { id: 'admin-pipeline', label: 'Pipeline de collecte', icon: Zap },
     { id: 'admin-audit', label: 'Journal d’audit', icon: History },
-    { id: 'admin-sessions', label: 'Sessions & Sécurité', icon: Lock }
+    { id: 'admin-sessions', label: 'Sessions & Sécurité', icon: Lock },
+    { id: 'admin-settings', label: 'Réglages', icon: Settings }
   ];
 
   return (

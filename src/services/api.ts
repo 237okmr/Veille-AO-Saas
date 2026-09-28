@@ -19,7 +19,9 @@ import {
   AuditLogItem,
   SessionItem,
   AlertFilterOptions,
-  ApiConfigInfo
+  ApiConfigInfo,
+  ReglagesData,
+  ReglagesParametres
 } from '../types';
 
 const TOKEN_KEY = 'cam_marches_token';
@@ -456,6 +458,32 @@ export const api = {
   purgeExpiredSessions: () =>
     request<{ sessionsPurgees: number }>('/admin/sessions/purge', {
       method: 'POST'
+    }),
+
+  getReglages: () => request<ReglagesData>('/admin/reglages'),
+
+  updateProxyMode: (mode: 'OFF' | 'OBSERVE' | 'ENFORCE') =>
+    request<{ mode: string }>('/admin/reglages/proxy-mode', {
+      method: 'POST',
+      body: JSON.stringify({ mode })
+    }),
+
+  updateReglagesParametres: (payload: Partial<ReglagesParametres>) =>
+    request<{ modifie: string[]; refuses: string[] }>('/admin/reglages/parametres', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  updateReglagesClesGemini: (payload: { cle1: string; cle2: string }) =>
+    request<{ nbCles: number; masquees: string[] }>('/admin/reglages/cles-gemini', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  updateReglagesCleDeepSeek: (payload: { cle: string }) =>
+    request<{ nbCles: number; masquees: string[] }>('/admin/reglages/cle-deepseek', {
+      method: 'POST',
+      body: JSON.stringify(payload)
     }),
 
   getPipelineActions: () => request<{ actions: PipelineAction[] } | PipelineAction[]>('/admin/actions/list'),

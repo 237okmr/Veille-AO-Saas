@@ -35,12 +35,9 @@ interface TestStepResult {
   error?: string;
 }
 
-interface StatsComparison {
+interface RealStatItem {
   metric: string;
-  displayed: number;
-  real: number;
-  match: boolean;
-  delta: number;
+  value: number | null;
 }
 
 interface BrowserErrorLog {
@@ -67,17 +64,17 @@ export const DiagnosticPage: React.FC<DiagnosticPageProps> = ({ onBack }) => {
   const [statsTest, setStatsTest] = useState<TestStepResult>({ status: 'idle' });
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [statsValueChecks, setStatsValueChecks] = useState<{
-    clients: { expected: number; received: number | null; pass: boolean };
-    utilisateurs: { expected: number; received: number | null; pass: boolean };
-    avis: { expected: number; received: number | null; pass: boolean };
-    alertes: { expected: number; received: number | null; pass: boolean };
+    clients: number | null;
+    utilisateurs: number | null;
+    avis: number | null;
+    alertes: number | null;
   } | null>(null);
 
   // SECTION 3: Proxy Test & Code Search
   const [directCalls, setDirectCalls] = useState<Array<{ file: string; line: number; snippet: string }>>([]);
 
-  // SECTION 4: Data comparison
-  const [comparisons, setComparisons] = useState<StatsComparison[]>([]);
+  // SECTION 4: Data totals
+  const [realStats, setRealStats] = useState<RealStatItem[]>([]);
 
   // SECTION 5: Logs
   const [serverLogs, setServerLogs] = useState<Array<{ id: number; timestamp: string; level: 'info' | 'warn' | 'error'; message: string }>>([]);
@@ -163,114 +160,83 @@ export const DiagnosticPage: React.FC<DiagnosticPageProps> = ({ onBack }) => {
       });
     }
 
-    // STEP B: POST /api/proxy with /auth/login
+    // STEP B: GET /api/proxy (/auth/verify — session active)
     setLoginTest({ status: 'running' });
-    let extractedToken: string | null = null;
-    const startLogin = Date.now();
-    try {
-      const payloadB = {
-        route: '/auth/login',
-        email: '237okmr@gmail.com',
-        motDePasse: 'ChangezMoi2026!'
-      };
-      const resB = await api.proxyPost(payloadB);
-      const durationB = Date.now() - startLogin;
-      const loginSuccess = resB.ok && resB.data?.succes === true;
-      extractedToken = resB.data?.donnees?.token || null;
-      setTempToken(extractedToken);
+    const storedToken = localStorage.getItem('cam_marches_token');
+    setTempToken(storedToken);
 
-      setLoginTest({
-        status: loginSuccess ? 'success' : 'failure',
-        code: resB.status,
-        durationMs: durationB,
-        payload: resB.data,
-        raw: resB.raw
-      });
-    } catch (e: any) {
+    if (!storedToken) {
       setLoginTest({
         status: 'failure',
-        durationMs: Date.now() - startLogin,
-        error: e.message || 'Échec de la connexion POST /auth/login'
+        durationMs: 0,
+        error: "Aucune session active : connectez-vous d'abord dans l'application avant de lancer ce diagnostic."
       });
+    } else {
+      const startLogin = Date.now();
+      try {
+        const resB = await api.proxyGet('/auth/verify', storedToken);
+        const durationB = Date.now() - startLogin;
+        const verifySuccess = resB.ok && resB.data?.succes === true;
+
+        setLoginTest({
+          status: verifySuccess ? 'success' : 'failure',
+          code: resB.status,
+          durationMs: durationB,
+          payload: resB.data,
+          raw: resB.raw,
+          error: !verifySuccess ? (resB.data?.message || 'Token de session invalide ou expiré') : undefined
+        });
+      } catch (e: any) {
+        setLoginTest({
+          status: 'failure',
+          durationMs: Date.now() - startLogin,
+          error: e.message || 'Échec de la vérification de session /auth/verify'
+        });
+      }
     }
 
     // STEP C: GET /api/proxy?route=/admin/stats&token=...
     setStatsTest({ status: 'running' });
     const startStats = Date.now();
     try {
-      const resC = await api.proxyGet('/admin/stats', extractedToken || undefined);
+      const resC = await api.proxyGet('/admin/stats', storedToken || undefined);
       const durationC = Date.now() - startStats;
       const statsSuccess = resC.ok && (resC.data?.succes === true || resC.status === 200);
 
-      // Verify specific expected values:
-      // clients.total === 2, utilisateurs.total === 1, avis.total === 293, alertes.total === 65
+      // Raw received values
       const d = resC.data?.donnees || {};
       const receivedClients = d.clients?.total ?? d.totalClients ?? null;
       const receivedUsers = d.utilisateurs?.total ?? d.totalUtilisateurs ?? null;
       const receivedAvis = d.avis?.total ?? d.totalAvisScrapes ?? null;
       const receivedAlertes = d.alertes?.total ?? d.totalAlertesGenerees ?? null;
 
-      const checks = {
-        clients: {
-          expected: 2,
-          received: receivedClients,
-          pass: receivedClients === 2
-        },
-        utilisateurs: {
-          expected: 1,
-          received: receivedUsers,
-          pass: receivedUsers === 1
-        },
-        avis: {
-          expected: 293,
-          received: receivedAvis,
-          pass: receivedAvis === 293
-        },
-        alertes: {
-          expected: 65,
-          received: receivedAlertes,
-          pass: receivedAlertes === 65
-        }
-      };
-      setStatsValueChecks(checks);
+      setStatsValueChecks({
+        clients: receivedClients,
+        utilisateurs: receivedUsers,
+        avis: receivedAvis,
+        alertes: receivedAlertes
+      });
 
-      // Construct Comparison Table (SECTION 4)
-      const currentDashboardClients = 2;
-      const currentDashboardUsers = 1;
-      const currentDashboardAvis = 293;
-      const currentDashboardAlertes = 65;
-
-      const comp: StatsComparison[] = [
+      // Construct Real Totals Table (SECTION 4)
+      const statsItems: RealStatItem[] = [
         {
           metric: 'Nombre de clients',
-          displayed: currentDashboardClients,
-          real: receivedClients !== null ? receivedClients : 0,
-          match: currentDashboardClients === receivedClients,
-          delta: receivedClients !== null ? currentDashboardClients - receivedClients : 0
+          value: receivedClients
         },
         {
           metric: "Nombre d'utilisateurs",
-          displayed: currentDashboardUsers,
-          real: receivedUsers !== null ? receivedUsers : 0,
-          match: currentDashboardUsers === receivedUsers,
-          delta: receivedUsers !== null ? currentDashboardUsers - receivedUsers : 0
+          value: receivedUsers
         },
         {
           metric: "Nombre d'avis ARMP",
-          displayed: currentDashboardAvis,
-          real: receivedAvis !== null ? receivedAvis : 0,
-          match: currentDashboardAvis === receivedAvis,
-          delta: receivedAvis !== null ? currentDashboardAvis - receivedAvis : 0
+          value: receivedAvis
         },
         {
           metric: "Nombre d'alertes",
-          displayed: currentDashboardAlertes,
-          real: receivedAlertes !== null ? receivedAlertes : 0,
-          match: currentDashboardAlertes === receivedAlertes,
-          delta: receivedAlertes !== null ? currentDashboardAlertes - receivedAlertes : 0
+          value: receivedAlertes
         }
       ];
-      setComparisons(comp);
+      setRealStats(statsItems);
 
       setStatsTest({
         status: statsSuccess ? 'success' : 'failure',
@@ -331,24 +297,25 @@ a) GET /api/proxy?route=/ping :
    - Statut : ${pingTest.status === 'success' ? 'SUCCÈS ✅' : 'ÉCHEC ❌'} (Code HTTP: ${pingTest.code || 'N/A'}, Durée: ${pingTest.durationMs || 0}ms)
    - Réponse : ${JSON.stringify(pingTest.payload || pingTest.error || {})}
 
-b) POST /api/proxy (/auth/login) :
+b) GET /api/proxy (/auth/verify — session active) :
    - Statut : ${loginTest.status === 'success' ? 'SUCCÈS ✅' : 'ÉCHEC ❌'} (Code HTTP: ${loginTest.code || 'N/A'}, Durée: ${loginTest.durationMs || 0}ms)
-   - Token extrait : ${tempToken ? `${tempToken.substring(0, 15)}... [OK ✅]` : 'Aucun token reçu [KO ❌]'}
+   - Token de session : ${tempToken ? `${tempToken.substring(0, 15)}... [OK ✅]` : 'Aucune session active [KO ❌]'}
+   ${loginTest.error ? `- Message : ${loginTest.error}` : ''}
 
 c) GET /api/proxy?route=/admin/stats :
    - Statut : ${statsTest.status === 'success' ? 'SUCCÈS ✅' : 'ÉCHEC ❌'} (Code HTTP: ${statsTest.code || 'N/A'}, Durée: ${statsTest.durationMs || 0}ms)
-   - Contrôle des valeurs retournées :
-     • clients.total === 2 : ${statsValueChecks?.clients.pass ? 'OK ✅' : `KO ❌ (Reçu: ${statsValueChecks?.clients.received})`}
-     • utilisateurs.total === 1 : ${statsValueChecks?.utilisateurs.pass ? 'OK ✅' : `KO ❌ (Reçu: ${statsValueChecks?.utilisateurs.received})`}
-     • avis.total === 293 : ${statsValueChecks?.avis.pass ? 'OK ✅' : `KO ❌ (Reçu: ${statsValueChecks?.avis.received})`}
-     • alertes.total === 65 : ${statsValueChecks?.alertes.pass ? 'OK ✅' : `KO ❌ (Reçu: ${statsValueChecks?.alertes.received})`}
+   - Valeurs réelles retournées :
+     • Clients : ${statsValueChecks?.clients ?? 'N/A'}
+     • Utilisateurs : ${statsValueChecks?.utilisateurs ?? 'N/A'}
+     • Avis ARMP : ${statsValueChecks?.avis ?? 'N/A'}
+     • Alertes : ${statsValueChecks?.alertes ?? 'N/A'}
 
 3. TEST DU PROXY :
 - Toutes les requêtes passent par /api/proxy : OUI ✅
 - Appels directs vers script.google.com dans le code : ${directCalls.length === 0 ? 'Aucun appel direct détecté (0 occurrence) ✅' : `${directCalls.length} appel(s) direct(s) trouvé(s) ❌`}
 
-4. TEST DES DONNÉES AFFICHÉES :
-${comparisons.map((c) => `- ${c.metric} : Affiché = ${c.displayed} | Réel = ${c.real} -> ${c.match ? 'IDENTIQUE ✅' : `DIFFÉRENCE ❌ (Écart: ${c.delta})`}`).join('\n')}
+4. DONNÉES RÉELLES (/admin/stats) :
+${realStats.length === 0 ? '- Aucune donnée chargée' : realStats.map((item) => `- ${item.metric} : ${item.value ?? 'Non disponible'}`).join('\n')}
 
 5. DERNIERS LOGS SERVEUR (${serverLogs.length} entrées) :
 ${serverLogs.map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] ${l.message}`).join('\n')}
@@ -545,7 +512,7 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
               </div>
             </div>
 
-            {/* Step B: POST /api/proxy with /auth/login */}
+            {/* Step B: GET /api/proxy (/auth/verify — session active) */}
             <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -553,7 +520,7 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
                     B
                   </span>
                   <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
-                    POST /api/proxy (route: /auth/login, email: 237okmr@gmail.com)
+                    GET /api/proxy (/auth/verify — session active)
                   </span>
                 </div>
                 <div>
@@ -563,7 +530,7 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
                   {loginTest.status === 'success' && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-bold text-xs bg-emerald-50 text-emerald-800 border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      SUCCÈS & TOKEN REÇU ✅ ({loginTest.durationMs}ms)
+                      SUCCÈS & SESSION VALIDE ✅ ({loginTest.durationMs}ms)
                     </span>
                   )}
                   {loginTest.status === 'failure' && (
@@ -575,9 +542,15 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
                 </div>
               </div>
 
+              {loginTest.error && (
+                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
+                  {loginTest.error}
+                </div>
+              )}
+
               {tempToken && (
                 <div className="p-2 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-xs font-mono text-teal-900 dark:text-teal-200 flex items-center justify-between">
-                  <span>Token extrait en mémoire : <strong>{tempToken.substring(0, 18)}••••••••</strong></span>
+                  <span>Token de session actif : <strong>{tempToken.substring(0, 18)}••••••••</strong></span>
                   <span className="text-[10px] bg-teal-200/60 dark:bg-teal-900 px-2 py-0.5 rounded">Utilisé pour l'étape C</span>
                 </div>
               )}
@@ -587,7 +560,7 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
                   Résultat brut JSON :
                 </span>
                 <pre className="p-3 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 font-mono text-[11px] text-slate-800 dark:text-slate-200 overflow-x-auto max-h-48">
-                  {loginTest.raw || JSON.stringify(loginTest.payload || { message: 'En attente du test...' }, null, 2)}
+                  {loginTest.raw || (loginTest.error ? JSON.stringify({ error: loginTest.error }, null, 2) : JSON.stringify(loginTest.payload || { message: 'En attente du test...' }, null, 2))}
                 </pre>
               </div>
             </div>
@@ -622,43 +595,39 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
                 </div>
               </div>
 
-              {/* Value checks table */}
+              {/* Raw stats received display */}
               {statsValueChecks && (
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                    Vérification des 4 métriques de contrôle :
+                    Valeurs réelles reçues de /admin/stats :
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
-                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${statsValueChecks.clients.pass ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-rose-50/50 border-rose-200 text-rose-900'}`}>
-                      <div>
-                        <span className="block font-semibold">clients.total === 2</span>
-                        <span className="text-[11px] opacity-80">Reçu : {statsValueChecks.clients.received ?? 'Non trouvé'}</span>
-                      </div>
-                      <span className="text-base font-bold">{statsValueChecks.clients.pass ? '✅' : '❌'}</span>
+                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Clients</span>
+                      <span className="text-base font-bold font-mono text-slate-900 dark:text-white mt-1">
+                        {statsValueChecks.clients !== null ? statsValueChecks.clients : 'N/A'}
+                      </span>
                     </div>
 
-                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${statsValueChecks.utilisateurs.pass ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-rose-50/50 border-rose-200 text-rose-900'}`}>
-                      <div>
-                        <span className="block font-semibold">utilisateurs.total === 1</span>
-                        <span className="text-[11px] opacity-80">Reçu : {statsValueChecks.utilisateurs.received ?? 'Non trouvé'}</span>
-                      </div>
-                      <span className="text-base font-bold">{statsValueChecks.utilisateurs.pass ? '✅' : '❌'}</span>
+                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Utilisateurs</span>
+                      <span className="text-base font-bold font-mono text-slate-900 dark:text-white mt-1">
+                        {statsValueChecks.utilisateurs !== null ? statsValueChecks.utilisateurs : 'N/A'}
+                      </span>
                     </div>
 
-                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${statsValueChecks.avis.pass ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-rose-50/50 border-rose-200 text-rose-900'}`}>
-                      <div>
-                        <span className="block font-semibold">avis.total === 293</span>
-                        <span className="text-[11px] opacity-80">Reçu : {statsValueChecks.avis.received ?? 'Non trouvé'}</span>
-                      </div>
-                      <span className="text-base font-bold">{statsValueChecks.avis.pass ? '✅' : '❌'}</span>
+                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Avis ARMP</span>
+                      <span className="text-base font-bold font-mono text-slate-900 dark:text-white mt-1">
+                        {statsValueChecks.avis !== null ? statsValueChecks.avis : 'N/A'}
+                      </span>
                     </div>
 
-                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${statsValueChecks.alertes.pass ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900' : 'bg-rose-50/50 border-rose-200 text-rose-900'}`}>
-                      <div>
-                        <span className="block font-semibold">alertes.total === 65</span>
-                        <span className="text-[11px] opacity-80">Reçu : {statsValueChecks.alertes.received ?? 'Non trouvé'}</span>
-                      </div>
-                      <span className="text-base font-bold">{statsValueChecks.alertes.pass ? '✅' : '❌'}</span>
+                    <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">Alertes</span>
+                      <span className="text-base font-bold font-mono text-slate-900 dark:text-white mt-1">
+                        {statsValueChecks.alertes !== null ? statsValueChecks.alertes : 'N/A'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -753,16 +722,16 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
           </div>
         </div>
 
-        {/* SECTION 4: Test des données affichées (Affiché vs Réel) */}
+        {/* SECTION 4: Données réelles (/admin/stats) */}
         <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-teal-700" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                4. Test des données affichées (Affiché vs Réel)
+                4. Données réelles de l'application (/admin/stats)
               </h2>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">Comparaison côte à côte</span>
+            <span className="text-[11px] font-mono text-slate-400">Totaux en direct</span>
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -770,46 +739,24 @@ ${browserErrors.length === 0 ? 'Aucune erreur console détectée dans le navigat
               <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Métrique</th>
-                  <th className="py-3 px-4">Valeur Affichée (Dashboard)</th>
-                  <th className="py-3 px-4">Valeur Réelle (/admin/stats)</th>
-                  <th className="py-3 px-4">Écart (Delta)</th>
-                  <th className="py-3 px-4 text-right">Statut</th>
+                  <th className="py-3 px-4 text-right">Valeur Réelle (/admin/stats)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-                {comparisons.length === 0 ? (
+                {realStats.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500">
-                      Cliquez sur « Tester la connexion » pour effectuer la comparaison des données en direct.
+                    <td colSpan={2} className="py-6 text-center text-slate-500">
+                      Cliquez sur « Tester la connexion » pour charger les données réelles en direct.
                     </td>
                   </tr>
                 ) : (
-                  comparisons.map((c) => (
-                    <tr key={c.metric} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  realStats.map((item) => (
+                    <tr key={item.metric} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                       <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">
-                        {c.metric}
+                        {item.metric}
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-slate-700 dark:text-slate-200">
-                        {c.displayed}
-                      </td>
-                      <td className="py-3 px-4 font-mono font-bold text-teal-700 dark:text-teal-400">
-                        {c.real}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-500">
-                        {c.delta === 0 ? '0' : (c.delta > 0 ? `+${c.delta}` : `${c.delta}`)}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {c.match ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded font-bold text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            IDENTIQUE ✅
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded font-bold text-[11px] bg-rose-50 text-rose-700 border border-rose-200">
-                            <XCircle className="w-3 h-3 text-rose-600" />
-                            DIFFÉRENT ❌ ({c.delta})
-                          </span>
-                        )}
+                      <td className="py-3 px-4 font-mono font-bold text-teal-700 dark:text-teal-400 text-right">
+                        {item.value !== null ? item.value : 'Non disponible'}
                       </td>
                     </tr>
                   ))

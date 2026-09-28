@@ -13,6 +13,7 @@ import { AdminUsers } from '../admin/AdminUsers';
 import { AdminPipeline } from '../admin/AdminPipeline';
 import { AdminAudit } from '../admin/AdminAudit';
 import { AdminSessions } from '../admin/AdminSessions';
+import { AdminSettings } from '../admin/AdminSettings';
 import { DiagnosticPage } from '../diagnostic/DiagnosticPage';
 import { ApiConfigModal } from '../common/ApiConfigModal';
 import { api } from '../../services/api';
@@ -102,6 +103,8 @@ export const AppLayout: React.FC = () => {
         return <AdminAudit />;
       case 'admin-sessions':
         return <AdminSessions />;
+      case 'admin-settings':
+        return <AdminSettings />;
       case 'diagnostic':
         return <DiagnosticPage onBack={() => handleNavigate(isAdmin ? 'admin-dashboard' : 'client-dashboard')} />;
 

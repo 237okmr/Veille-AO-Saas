@@ -580,6 +580,7 @@ async function forwardToAppsScript(req: Request, targetRoute: string) {
   // Apps Script web apps receive params either as query or within body
   const urlObj = new URL(url);
   urlObj.searchParams.set('route', targetRoute);
+  urlObj.searchParams.set('proxyKey', process.env.PROXY_SHARED_SECRET || '');
 
   // Copy incoming query params
   for (const [key, value] of Object.entries(req.query)) {
@@ -616,6 +617,7 @@ async function forwardToAppsScript(req: Request, targetRoute: string) {
     options.body = JSON.stringify(bodyWithRoute);
   }
 
+  console.log('[DIAG-PROXYKEY] presente=' + urlObj.searchParams.has('proxyKey') + ' longueur=' + (urlObj.searchParams.get('proxyKey') || '').length);
   const response = await fetch(urlObj.toString(), options);
   const text = await response.text();
   try {
