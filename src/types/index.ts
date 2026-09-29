@@ -1,3 +1,32 @@
+export interface RadarBlipItem {
+  idAO: string;
+  titreAO: string;
+  maitreOuvrage: string;
+  region: string;
+  montantEstime: number;
+  dateLimite: string;
+  typeProcedure: string;
+  scoreIA: number; // e.g. 4.8 out of 5
+  motifScore: string;
+  sourceType: 'NATIONAL' | 'INTERNATIONAL_BAILLEURS';
+  sourceNom: string;
+  angle: number; // 0 to 360 degrees on radar circle
+  radiusPercent: number; // 20% to 85% from center
+  datePublication?: string;
+}
+
+export interface PublicRadarData {
+  derniereSynchro: string;
+  statutSynchro: 'ACTIF' | 'SYNCHRONISE';
+  totalAvisAnalysesPeriode: number;
+  sourcesOverview: {
+    nationalCount: number;
+    internationalCount: number;
+    sourcesList: string[];
+  };
+  blips: RadarBlipItem[];
+}
+
 export type UserRole = 'ADMIN' | 'CLIENT';
 export type ActiveStatus = 'OUI' | 'NON';
 export type AlertState = 'NOUVEAU' | 'TRAITE' | 'IGNORE' | 'SAUVEGARDE';

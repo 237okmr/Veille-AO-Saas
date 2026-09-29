@@ -23,7 +23,8 @@ import {
   AlertFilterOptions,
   ApiConfigInfo,
   ReglagesData,
-  ReglagesParametres
+  ReglagesParametres,
+  PublicRadarData
 } from '../types';
 
 const TOKEN_KEY = 'cam_marches_token';
@@ -119,8 +120,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
-  // CONFIG & STATUS
+  // CONFIG & PUBLIC RADAR
   getConfig: () => request<ApiConfigInfo>('/config'),
+  getPublicRadarTicker: () => request<PublicRadarData>('/public/radar-ticker'),
 
   // AUTH
   login: (email: string, motDePasse: string) =>
