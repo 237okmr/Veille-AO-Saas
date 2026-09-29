@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { AvisRadar } from '../../types/radar';
-import { genererExemplesAvisRadar, joursRestants } from '../../utils/radarUtils';
+import { genererExemplesAvisRadar, joursRestants, deduireSourceCanonique } from '../../utils/radarUtils';
 import { RadarSvg } from './RadarSvg';
 import { AnnonceCard } from './AnnonceCard';
 import { useCycleAvis } from '../../hooks/useCycleAvis';
@@ -47,22 +47,11 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
         if (isMounted && res?.donnees?.blips && res.donnees.blips.length > 0) {
           const avisValides: AvisRadar[] = res.donnees.blips
             .map((item) => {
-              const srcUpper = item.sourceNom?.toUpperCase() || '';
-              let sourceCanonique: AvisRadar['source'] = 'ARMP';
-              if (srcUpper.includes('COLEPS')) sourceCanonique = 'COLEPS';
-              else if (srcUpper.includes('ONU') || srcUpper.includes('UN')) sourceCanonique = 'ONU';
-              else if (
-                item.sourceType === 'INTERNATIONAL_BAILLEURS' ||
-                srcUpper.includes('BAILLEUR') ||
-                srcUpper.includes('BANQUE') ||
-                srcUpper.includes('BAD')
-              ) {
-                sourceCanonique = 'BAILLEURS';
-              }
+              const sourceCanonique = deduireSourceCanonique(item.sourceNom, item.sourceType);
 
               let procCanonique: AvisRadar['procedure'] = 'AONO';
               const procUpper = item.typeProcedure?.toUpperCase() || '';
-              if (procUpper.includes('AMI')) procCanonique = 'AMI';
+              if (procUpper.includes('AMI') || procUpper.includes('ASMI')) procCanonique = 'AMI';
               else if (procUpper.includes('AOI') || procUpper.includes('INTERNATIONAL')) procCanonique = 'AOI';
 
               return {

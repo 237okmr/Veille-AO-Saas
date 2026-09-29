@@ -93,17 +93,20 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 2: Status & Quick Info */}
       <div className="hidden md:flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onOpenApiConfig}
-          aria-label="Statut de connexion au proxy Google Apps Script"
-          className="flex items-center gap-2 text-[0.8125rem] py-1.5 px-3 rounded-champ border border-ligne text-discret hover:text-encre hover:bg-onglets transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-focus"
-          title="Consulter le statut du proxy Google Apps Script"
-        >
-          <span className={`w-2 h-2 rounded-full ${apiConfig?.isConfigured ? 'bg-emeraude' : 'bg-amber-500 animate-pulse'}`} />
-          <span>{apiConfig?.isConfigured ? 'API Apps Script active' : 'Mode Sandbox'}</span>
-          <Settings2 className="w-4 h-4 text-discret" />
-        </button>
+        {/* Pastille technique : STRICTEMENT réservée aux administrateurs */}
+        {user?.role === 'ADMIN' && (
+          <button
+            type="button"
+            onClick={onOpenApiConfig}
+            aria-label="Statut de connexion au proxy Google Apps Script"
+            className="flex items-center gap-2 text-[0.8125rem] py-1.5 px-3 rounded-champ border border-ligne text-discret hover:text-encre hover:bg-onglets transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-focus"
+            title="Consulter le statut du proxy Google Apps Script"
+          >
+            <span className={`w-2 h-2 rounded-full ${apiConfig?.isConfigured ? 'bg-emeraude' : 'bg-amber-500 animate-pulse'}`} />
+            <span>{apiConfig?.isConfigured ? 'API Apps Script active' : 'Mode Sandbox'}</span>
+            <Settings2 className="w-4 h-4 text-discret" />
+          </button>
+        )}
 
         {user?.role === 'CLIENT' && (
           <button
@@ -205,17 +208,19 @@ export const Header: React.FC<HeaderProps> = ({
                   </>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    onOpenApiConfig();
-                    setDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-[0.8125rem] text-encre hover:bg-onglets transition-colors cursor-pointer"
-                >
-                  <Globe className="w-4 h-4 text-discret" />
-                  <span>Configuration API proxy</span>
-                </button>
+                {user?.role === 'ADMIN' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenApiConfig();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[0.8125rem] text-encre hover:bg-onglets transition-colors cursor-pointer"
+                  >
+                    <Globe className="w-4 h-4 text-discret" />
+                    <span>Configuration API proxy</span>
+                  </button>
+                )}
               </div>
 
               <div className="pt-1 border-t border-ligne">

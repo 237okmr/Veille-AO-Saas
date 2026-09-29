@@ -70,8 +70,12 @@ export const onUnauthorized = () => {
   window.dispatchEvent(new CustomEvent('auth:unauthorized'));
 };
 
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const token = getToken();
+export interface RequestOptions extends RequestInit {
+  token?: string;
+}
+
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  const token = options.token || getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -83,8 +87,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   let res: Response;
   try {
+    const { token: _tokenOption, ...fetchOptions } = options;
     res = await fetch(url, {
-      ...options,
+      ...fetchOptions,
       headers
     });
   } catch {
@@ -145,15 +150,12 @@ export const api = {
     }),
 
   verify: (tokenParam?: string) => {
-    const token = tokenParam || getToken();
-    return request<User>(`/auth/verify${token ? `?token=${encodeURIComponent(token)}` : ''}`);
+    return request<User>('/auth/verify', tokenParam ? { token: tokenParam } : {});
   },
 
   logout: () => {
-    const token = getToken();
     return request<null>('/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({ token })
+      method: 'POST'
     });
   },
 
@@ -553,7 +555,6 @@ export const api = {
   proxyGet: async (route: string, token?: string) => {
     const q = new URLSearchParams();
     q.set('route', route);
-    if (token) q.set('token', token);
     const res = await fetch(`/api/proxy?${q.toString()}`, {
       headers: {
         'Accept': 'application/json',

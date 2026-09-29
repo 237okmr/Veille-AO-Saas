@@ -8,6 +8,48 @@ export function categoriePourSource(source: AvisRadar['source']): CategorieAvis 
 }
 
 /**
+ * Déduit la source canonique ('ARMP' | 'COLEPS' | 'BAILLEURS' | 'ONU')
+ * selon des règles strictes à base de mots entiers et du type de source.
+ */
+export function deduireSourceCanonique(
+  sourceNom?: string | null,
+  sourceType?: string | null
+): AvisRadar['source'] {
+  const nom = (sourceNom || '').trim();
+  const typeUpper = (sourceType || '').trim().toUpperCase();
+
+  // Mots entiers pour les agences de l'ONU
+  const regexOnu = /\b(ONU|UN|UNDP|PNUD|UNICEF|OMS|WHO)\b/i;
+  // Mot entier pour COLEPS
+  const regexColeps = /\bCOLEPS\b/i;
+
+  // (a) Regarde d'abord la propriété sourceType envoyée par l'API
+  if (typeUpper) {
+    const isInternational = typeUpper.startsWith('INTERNATIONAL');
+    if (isInternational) {
+      // (b) International : ONU si mot entier ONU/UN/PNUD/etc., sinon BAILLEURS
+      return regexOnu.test(nom) ? 'ONU' : 'BAILLEURS';
+    } else {
+      // (c) National : COLEPS si mot entier COLEPS, sinon ARMP
+      return regexColeps.test(nom) ? 'COLEPS' : 'ARMP';
+    }
+  }
+
+  // (d) Si sourceType est absent, applique les mêmes règles de mots entiers sur le nom de la source
+  if (regexOnu.test(nom)) {
+    return 'ONU';
+  }
+  const regexBailleurs = /\b(BAILLEUR|BAILLEURS|BANQUE|BM|BAD|AFD|UE|DEVELOPMENTAID|DEVELOPMENT|INTERNATIONAL)\b/i;
+  if (regexBailleurs.test(nom)) {
+    return 'BAILLEURS';
+  }
+  if (regexColeps.test(nom)) {
+    return 'COLEPS';
+  }
+  return 'ARMP';
+}
+
+/**
  * Calcule le nombre de jours restants jusqu'à la date limite au fuseau Africa/Douala (UTC+1).
  * Arrondi au jour supérieur, jamais négatif.
  */

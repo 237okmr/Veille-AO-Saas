@@ -8,8 +8,8 @@ import { VoletDroit, OngletActif } from './VoletDroit';
 export const AuthPage: React.FC = () => {
   const { t } = useLangue();
 
-  // État onglet actif partagé ('pilote' | 'connexion')
-  const [ongletActif, setOngletActif] = useState<OngletActif>('connexion');
+  // État onglet actif partagé ('pilote' | 'connexion') - Défaut : 'pilote' pour conversion
+  const [ongletActif, setOngletActif] = useState<OngletActif>('pilote');
 
   const firstInputRef = useRef<HTMLInputElement>(null);
 
