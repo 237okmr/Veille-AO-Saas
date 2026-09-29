@@ -69,7 +69,7 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
         modePaiement: 'Orange Money Web',
         articles: [
           {
-            designation: 'Abonnement Veille Marchés Publics Cameroun - Formule Business',
+            designation: 'Abonnement Market Advisor CM - Formule Business',
             quantite: 1,
             prixUnitaire: Math.round((subscription.montantFCFA || 125000) / 1.1925),
             total: Math.round((subscription.montantFCFA || 125000) / 1.1925)
@@ -87,7 +87,7 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
         modePaiement: 'MTN Mobile Money',
         articles: [
           {
-            designation: 'Abonnement Veille Marchés Publics Cameroun - Formule Business',
+            designation: 'Abonnement Market Advisor CM - Formule Business',
             quantite: 1,
             prixUnitaire: Math.round((subscription.montantFCFA || 125000) / 1.1925),
             total: Math.round((subscription.montantFCFA || 125000) / 1.1925)
@@ -105,7 +105,7 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
         modePaiement: 'Virement Bancaire (UBA)',
         articles: [
           {
-            designation: 'Abonnement Veille Marchés Publics Cameroun - Formule Business',
+            designation: 'Abonnement Market Advisor CM - Formule Business',
             quantite: 1,
             prixUnitaire: Math.round((subscription.montantFCFA || 125000) / 1.1925),
             total: Math.round((subscription.montantFCFA || 125000) / 1.1925)

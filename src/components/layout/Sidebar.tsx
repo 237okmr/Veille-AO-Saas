@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLangue } from '../../context/LangueContext';
 import {
   LayoutDashboard,
   Bell,
@@ -7,17 +8,14 @@ import {
   Sliders,
   User,
   Users,
-  Shield,
-  Activity,
   History,
   Lock,
   Settings,
-  Sparkles,
-  FileSpreadsheet,
   CalendarClock,
   Zap,
   X
 } from 'lucide-react';
+import { LogoMarketAdvisor } from '../brand/LogoMarketAdvisor';
 
 interface SidebarProps {
   currentView: string;
@@ -35,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   unreadCount = 0
 }) => {
   const { user } = useAuth();
+  const { t } = useLangue();
   const isAdmin = user?.role === 'ADMIN';
 
   const clientNav = [
@@ -49,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const adminNav = [
     { id: 'admin-dashboard', label: 'Supervision globale', icon: LayoutDashboard },
     { id: 'admin-clients', label: 'Entreprises clientes', icon: Building2 },
+    { id: 'admin-alertes', label: 'Alertes clients', icon: Bell },
     { id: 'admin-users', label: 'Comptes utilisateurs', icon: Users },
     { id: 'admin-pipeline', label: 'Pipeline de collecte', icon: Zap },
     { id: 'admin-audit', label: 'Journal d’audit', icon: History },
@@ -68,34 +68,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-200 lg:static lg:translate-x-0 flex flex-col ${
+        className={`fixed top-0 bottom-0 left-0 z-40 w-64 border-r border-ligne bg-surface transition-transform duration-200 lg:static lg:translate-x-0 flex flex-col ${
           isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* Brand Zone */}
-        <div className="flex h-16 items-center justify-between px-5 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            {/* Cameroon flag emblem badge */}
-            <div className="relative w-8 h-8 rounded-lg overflow-hidden flex shadow-sm border border-slate-200 dark:border-slate-700 shrink-0">
-              <div className="w-1/3 h-full bg-[#007a5e]" />
-              <div className="w-1/3 h-full bg-[#ce1126] flex items-center justify-center">
-                <span className="text-[#fcd116] text-[8px] font-black">★</span>
-              </div>
-              <div className="w-1/3 h-full bg-[#fcd116]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white leading-tight">
-                MARCHÉS PUBLICS
-              </span>
-              <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-400 tracking-wider">
-                CAMEROUN VEILLE
-              </span>
-            </div>
-          </div>
+        <div className="flex h-16 items-center justify-between px-4 sm:px-5 border-b border-ligne">
+          <button
+            type="button"
+            onClick={() => onNavigate(isAdmin ? 'admin-dashboard' : 'client-dashboard')}
+            aria-label="Market Advisor CM, retour au tableau de bord"
+            className="flex items-center text-left rounded-champ transition-opacity hover:opacity-90 cursor-pointer"
+          >
+            <LogoMarketAdvisor taille="sm" />
+          </button>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 lg:hidden rounded-lg"
+            aria-label="Fermer le menu"
+            className="p-2 text-discret hover:text-encre lg:hidden rounded-champ cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,8 +97,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
           {/* Main User Navigation */}
           <div>
-            <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {isAdmin ? 'Administration SaaS' : 'Espace Client'}
+            <div className="px-3 pb-2 text-[0.8125rem] font-semibold text-discret">
+              {isAdmin ? 'Administration SaaS' : 'Espace client'}
             </div>
             <nav className="space-y-1">
               {(isAdmin ? adminNav : clientNav).map((item) => {
@@ -115,29 +107,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => {
                       onNavigate(item.id);
                       onClose();
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-xs font-medium rounded-xl transition-all text-left ${
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`w-full h-[44px] flex items-center justify-between px-3 text-[0.9375rem] rounded-champ transition-colors text-left cursor-pointer ${
                       isActive
-                        ? 'bg-teal-50/90 dark:bg-teal-950/60 text-teal-900 dark:text-teal-300 font-semibold ring-1 ring-teal-200/60 dark:ring-teal-800/60 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200'
+                        ? 'bg-ok-fond text-teal font-semibold'
+                        : 'text-discret hover:bg-onglets hover:text-encre font-medium'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <Icon
-                        className={`w-4 h-4 shrink-0 ${
-                          isActive
-                            ? 'text-teal-700 dark:text-teal-400'
-                            : 'text-slate-400 dark:text-slate-500'
+                        className={`w-5 h-5 shrink-0 ${
+                          isActive ? 'text-teal' : 'text-discret'
                         }`}
                       />
                       <span className="truncate">{item.label}</span>
                     </div>
 
                     {'count' in item && typeof item.count === 'number' && item.count > 0 && (
-                      <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white tabular-nums">
+                      <span className="ml-2 px-2 py-0.5 text-[0.75rem] font-bold rounded-full bg-amber-500 text-white tabular-nums">
                         {item.count}
                       </span>
                     )}
@@ -147,24 +139,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </nav>
           </div>
 
-          {/* Quick Context Card */}
-          <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Ciblage IA Actif</span>
-            </div>
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              Surveillance continue des avis ARMP, DGTCFM et ministères camerounais.
-            </p>
+          {/* Discrete sources followed line */}
+          <div className="px-3 pt-4 border-t border-ligne text-[0.8125rem] text-discret leading-relaxed">
+            {t('sources')}
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-400 dark:text-slate-500">
-          <div className="flex items-center justify-between">
-            <span>v1.0.0 · Production</span>
-            <span className="font-mono text-[10px]">Yaoundé/Douala</span>
-          </div>
+        <div className="p-4 border-t border-ligne text-[0.8125rem] text-discret">
+          <span>Market Advisor CM · v1.0.0</span>
         </div>
       </aside>
     </>

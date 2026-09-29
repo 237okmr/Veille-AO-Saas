@@ -23,8 +23,21 @@ interface ServerLogEntry {
 const recentServerLogs: ServerLogEntry[] = [];
 let nextLogId = 1;
 
+// Masque les secrets (jetons de session, clé du proxy, mots de passe, jeton de lien de connexion)
+// avant toute écriture dans le journal : mémoire du diagnostic ET console du serveur.
+function masquerSecrets(texte: string): string {
+  let t = String(texte);
+  const secretProxy = (process.env.PROXY_SHARED_SECRET || '').trim();
+  if (secretProxy.length >= 8) t = t.split(secretProxy).join('***');
+  return t
+    .replace(/([?&](?:token|proxyKey|jeton|key|secret|password|motDePasse)=)[^&\s)"']+/gi, '$1***')
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+\/=-]+/gi, '$1***')
+    .replace(/("(?:token|proxyKey|jeton|motDePasse|nouveauMotDePasse|ancienMotDePasse|password|secret)"\s*:\s*")[^"]*(")/gi, '$1***$2')
+    .replace(/(#acces=)[0-9a-fA-F]{64}/g, '$1***');
+}
+
 function captureLog(level: 'info' | 'warn' | 'error', ...args: any[]) {
-  const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+  const msg = masquerSecrets(args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '));
   recentServerLogs.push({
     id: nextLogId++,
     timestamp: new Date().toISOString(),
@@ -40,17 +53,20 @@ const origLog = console.log;
 const origWarn = console.warn;
 const origErr = console.error;
 
+const masquerArg = (a: any) =>
+  typeof a === 'string' ? masquerSecrets(a) : (a instanceof Error ? masquerSecrets(a.stack || a.message) : a);
+
 console.log = (...args: any[]) => {
   captureLog('info', ...args);
-  origLog(...args);
+  origLog(...args.map(masquerArg));
 };
 console.warn = (...args: any[]) => {
   captureLog('warn', ...args);
-  origWarn(...args);
+  origWarn(...args.map(masquerArg));
 };
 console.error = (...args: any[]) => {
   captureLog('error', ...args);
-  origErr(...args);
+  origErr(...args.map(masquerArg));
 };
 
 const app = express();
@@ -633,6 +649,48 @@ async function forwardToAppsScript(req: Request, targetRoute: string) {
   }
 }
 
+// Vérifie que l'appelant est un administrateur connecté (en-tête Authorization uniquement,
+// jamais dans l'adresse). Résultat gardé 60 s (accepté) ou 15 s (refusé) pour ne pas solliciter
+// Apps Script à chaque appel. Sans en-tête, aucun appel à Apps Script n'est fait.
+const adminCache = new Map<string, { ok: boolean; exp: number }>();
+let verifsAdminFenetre = { debut: 0, n: 0 };
+async function estAdministrateur(req: Request): Promise<boolean> {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return false;
+  const token = auth.substring(7).trim();
+  if (!token || token.length > 512) return false;
+
+  const cached = adminCache.get(token);
+  if (cached && cached.exp > Date.now()) return cached.ok;
+
+  // Plafond : au plus 20 vérifications par minute auprès d'Apps Script (les réponses en cache ne
+  // comptent pas), pour qu'une série de faux jetons ne consomme pas le quota d'Apps Script.
+  const maintenant = Date.now();
+  if (maintenant - verifsAdminFenetre.debut > 60_000) verifsAdminFenetre = { debut: maintenant, n: 0 };
+  if (verifsAdminFenetre.n >= 20) return false;
+  verifsAdminFenetre.n++;
+
+  let ok = false;
+  try {
+    if (isRealApiConfigured()) {
+      const rep = await forwardToAppsScript(
+        { method: 'GET', query: {}, headers: { authorization: `Bearer ${token}` } } as any,
+        '/auth/verify'
+      );
+      ok = Boolean(rep && rep.succes === true && rep.donnees && rep.donnees.role === 'ADMIN');
+    } else {
+      const session = activeTokens[token];
+      ok = Boolean(session && session.expires > Date.now() && session.user.role === 'ADMIN');
+    }
+  } catch {
+    ok = false;
+  }
+
+  if (adminCache.size >= 500) adminCache.clear();
+  adminCache.set(token, { ok, exp: Date.now() + (ok ? 60_000 : 15_000) });
+  return ok;
+}
+
 function scanSourceForDirectCalls(): Array<{ file: string; line: number; snippet: string }> {
   const results: Array<{ file: string; line: number; snippet: string }> = [];
   const srcDir = path.resolve(__dirname, 'src');
@@ -678,20 +736,25 @@ function scanSourceForDirectCalls(): Array<{ file: string; line: number; snippet
 // API ROUTES HANDLER (/api/*)
 // ============================================================================
 
-app.get('/api/diagnostic/status', (_req: Request, res: Response) => {
+app.get('/api/diagnostic/status', async (req: Request, res: Response) => {
   const effectiveUrl = getEffectiveApiUrl();
   const configured = isRealApiConfigured();
-  const directCalls = scanSourceForDirectCalls();
+  const masked = effectiveUrl ? (effectiveUrl.length > 35 ? effectiveUrl.substring(0, 35) + '...' : effectiveUrl) : '';
+  // Le journal du serveur, l'adresse complète d'Apps Script et le détail du code source
+  // sont réservés aux administrateurs connectés. Les autres voient seulement l'état général.
+  const admin = await estAdministrateur(req);
+  res.set('Cache-Control', 'no-store');
   res.json({
     succes: true,
     code: 200,
     donnees: {
-      apiUrlServer: effectiveUrl,
-      apiUrlServerMasked: effectiveUrl ? (effectiveUrl.length > 35 ? effectiveUrl.substring(0, 35) + '...' : effectiveUrl) : '',
+      apiUrlServer: admin ? effectiveUrl : masked,
+      apiUrlServerMasked: masked,
       isConfigured: configured,
       mode: configured ? 'APPS_SCRIPT_PRODUCTION' : 'SANDBOX_SIMULATION',
-      directCalls,
-      serverLogs: recentServerLogs.slice(-20)
+      directCalls: admin ? scanSourceForDirectCalls() : [],
+      serverLogs: admin ? recentServerLogs.slice(-20) : [],
+      journalReserve: !admin
     },
     timestamp: new Date().toISOString()
   });

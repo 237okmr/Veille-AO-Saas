@@ -4,16 +4,37 @@
  */
 
 import React from 'react';
-import { ToastProvider } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LangueProvider } from './context/LangueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
+import { AccesParLien } from './components/auth/AccesParLien';
 import { AppLayout } from './components/layout/AppLayout';
 import { DiagnosticPage } from './components/diagnostic/DiagnosticPage';
 
+// Lit le jeton du lien de connexion des e-mails d'alerte : « /#acces=<64 caractères hexadécimaux> ».
+// Fonction pure (aucun effet de bord) : elle peut être appelée deux fois sans conséquence.
+const lireJetonAcces = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const m = /^#acces=([0-9a-fA-F]{64})$/.exec(window.location.hash);
+  return m ? m[1].toLowerCase() : null;
+};
+
 const MainRouter: React.FC = () => {
   const { user, loading } = useAuth();
+  const toast = useToast();
+
+  // Jeton du lien de connexion : gardé en mémoire seulement, jamais écrit dans localStorage.
+  const [jetonAcces, setJetonAcces] = React.useState<string | null>(() => lireJetonAcces());
+
+  // Retire aussitôt le jeton de la barre d'adresse et de l'historique du navigateur.
+  React.useEffect(() => {
+    if (/^#acces=/.test(window.location.hash)) {
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
   const [pathname, setPathname] = React.useState(() => {
     if (typeof window !== 'undefined') {
       return window.location.pathname;
@@ -49,6 +70,21 @@ const MainRouter: React.FC = () => {
       setPathname(target);
     }
   }, [user, pathname]);
+
+  // Lien de connexion reçu par e-mail : l'écran de confirmation passe avant tout le reste.
+  if (jetonAcces) {
+    return (
+      <AccesParLien
+        jeton={jetonAcces}
+        onSucces={() => setJetonAcces(null)}
+        onEchec={(message) => {
+          setJetonAcces(null);
+          toast.warning('Lien non valide', message);
+        }}
+        onAnnuler={() => setJetonAcces(null)}
+      />
+    );
+  }
 
   if (loading) {
     return (

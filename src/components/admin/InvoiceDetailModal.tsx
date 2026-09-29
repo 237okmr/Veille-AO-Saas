@@ -216,7 +216,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 ) : (
                   <tr>
                     <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
-                      Abonnement Plateforme Veille Marchés Publics ({invoice.periode || 'Mensuel'})
+                      Abonnement Plateforme Market Advisor CM ({invoice.periode || 'Mensuel'})
                     </td>
                     <td className="py-3 px-3 text-center text-slate-600 dark:text-slate-400">1</td>
                     <td className="py-3 px-3 text-right text-slate-600 dark:text-slate-400">

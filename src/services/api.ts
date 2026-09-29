@@ -104,7 +104,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Si code 401
   if (res.status === 401 || data?.code === 401) {
-    if (!endpoint.includes('/auth/login')) {
+    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/lien')) {
       onUnauthorized();
     }
     throw new Error(data?.message || "Email ou mot de passe incorrect");
@@ -130,6 +130,12 @@ export const api = {
     request<User>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ route: '/auth/login', email, motDePasse })
+    }),
+
+  loginParLien: (jeton: string) =>
+    request<User>('/auth/lien', {
+      method: 'POST',
+      body: JSON.stringify({ route: '/auth/lien', jeton })
     }),
 
   register: (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }) =>

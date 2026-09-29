@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { AvisRadar } from '../../types/radar';
-import { genererExemplesAvisRadar, joursRestants, categoriePourSource } from '../../utils/radarUtils';
+import { genererExemplesAvisRadar, joursRestants } from '../../utils/radarUtils';
 import { RadarSvg } from './RadarSvg';
 import { AnnonceCard } from './AnnonceCard';
-import { RadarFilterBar } from './RadarFilterBar';
-import { useCycleAvis, TypeFiltreRadar } from '../../hooks/useCycleAvis';
+import { useCycleAvis } from '../../hooks/useCycleAvis';
 import { api } from '../../services/api';
 import { useLangue } from '../../context/LangueContext';
 
@@ -21,13 +20,10 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
 
   const [avisList, setAvisList] = useState<AvisRadar[]>(genererExemplesAvisRadar);
   const [isSimulated, setIsSimulated] = useState<boolean>(true);
-
-  const [filtre, setFiltre] = useState<TypeFiltreRadar>('ALL');
-  const [isManualPaused, setIsManualPaused] = useState<boolean>(false);
   const [isHoveredOrFocused, setIsHoveredOrFocused] = useState<boolean>(false);
 
-  // État de pause global : pause manuelle, survol/focus, ou réduction de mouvement demandée
-  const isCyclePaused = isManualPaused || isHoveredOrFocused || Boolean(shouldReduceMotion);
+  // État de pause global : survol/focus ou réduction de mouvement demandée
+  const isCyclePaused = isHoveredOrFocused || Boolean(shouldReduceMotion);
 
   // Hook de défilement automatique (5,5s, top 5 IA)
   const {
@@ -36,7 +32,7 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
     selectAvis
   } = useCycleAvis({
     avisList,
-    filtre,
+    filtre: 'ALL',
     isPaused: isCyclePaused,
     intervalMs: 5500
   });
@@ -102,31 +98,6 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
     chargerDonneesRadar();
   }, []);
 
-  // Décompte par filtre pour les puces
-  const { countTous, countNational, countInternational } = useMemo(() => {
-    let nat = 0;
-    let inter = 0;
-    avisList.forEach((a) => {
-      const cat = categoriePourSource(a.source);
-      if (cat === 'national') nat++;
-      else if (cat === 'international') inter++;
-    });
-    return {
-      countTous: avisList.length,
-      countNational: nat,
-      countInternational: inter
-    };
-  }, [avisList]);
-
-  // Fonction de filtrage pour le radar
-  const estFiltre = (avis: AvisRadar) => {
-    if (filtre === 'ALL') return true;
-    const cat = categoriePourSource(avis.source);
-    if (filtre === 'NATIONAL') return cat === 'national';
-    if (filtre === 'INTERNATIONAL') return cat === 'international';
-    return true;
-  };
-
   const handleSelectAvis = (avis: AvisRadar) => {
     selectAvis(avis);
     onSelectAvisProp?.(avis);
@@ -134,7 +105,7 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
 
   return (
     <div
-      className="w-full flex flex-col items-center justify-center relative my-auto gap-3"
+      className="w-full flex flex-col items-center relative gap-4"
       onMouseEnter={() => setIsHoveredOrFocused(true)}
       onMouseLeave={() => setIsHoveredOrFocused(false)}
       onFocus={() => setIsHoveredOrFocused(true)}
@@ -145,28 +116,14 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
         }
       }}
     >
-      {/* 1. Barre de filtres & bouton de pause */}
-      <div className="w-full max-w-[820px] px-2">
-        <RadarFilterBar
-          filtreActif={filtre}
-          onSelectFiltre={setFiltre}
-          isManualPaused={isManualPaused}
-          onTogglePause={() => setIsManualPaused((prev) => !prev)}
-          countTous={countTous}
-          countNational={countNational}
-          countInternational={countInternational}
-        />
-      </div>
-
-      {/* 2. Grille responsive : Grand Radar + Carte d'annonce HUD */}
-      <div className="w-full flex flex-col lg:flex-row items-center justify-around xl:justify-center gap-6 xl:gap-10">
+      {/* Grille responsive : Grand Radar + Carte d'annonce HUD */}
+      <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
         {/* Grand Radar SVG Animé */}
         <div className="flex flex-col items-center shrink-0">
           <RadarSvg
             avisList={avisList}
             selectedId={selectedId}
             onSelectAvis={handleSelectAvis}
-            estFiltre={estFiltre}
           />
         </div>
 
@@ -176,9 +133,9 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
         </div>
       </div>
 
-      {/* 3. Mention « Exemples illustratifs. » affichée uniquement si données simulées (masquée sous 700px) */}
+      {/* Mention « Exemples illustratifs. » affichée uniquement si données simulées */}
       {isSimulated && (
-        <p className="text-center text-[11px] text-discret italic select-none mt-1 hide-on-short-screen">
+        <p className="text-center text-[11px] text-discret italic select-none mt-0.5">
           {t('noteIllustratif')}
         </p>
       )}

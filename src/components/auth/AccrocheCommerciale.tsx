@@ -5,20 +5,20 @@ export const AccrocheCommerciale: React.FC = () => {
   const { t } = useLangue();
 
   return (
-    <div className="w-full px-1 mb-4 compact-mb-on-short-screen select-none">
+    <div className="w-full px-1 select-none">
       {/* 1. Titre H2 Commercial */}
-      <h2 className="font-titre font-extrabold text-[1.4rem] leading-[1.18] tracking-[-0.02em] text-encre">
+      <h2 className="font-titre font-extrabold text-lg sm:text-xl lg:text-[1.35rem] leading-snug tracking-tight text-encre">
         {t('accrocheTitre')}
       </h2>
 
       {/* 2. Phrase d'appui */}
-      <p className="mt-2 text-[0.875rem] text-discret font-normal leading-relaxed">
+      <p className="mt-1.5 text-xs sm:text-sm text-discret font-normal leading-relaxed">
         {t('accrocheSousTitre')}
       </p>
 
-      {/* 3. Trois arguments en liste sans puces avec coche SVG 18px (masqués sous 700px de hauteur) */}
-      <ul className="mt-3 space-y-1.5 hide-on-short-screen list-none p-0">
-        <li className="flex items-center gap-2 text-[0.875rem] font-medium text-encre leading-snug">
+      {/* 3. Trois arguments en liste sans puces avec coche SVG */}
+      <ul className="mt-3.5 space-y-2 list-none p-0">
+        <li className="flex items-center gap-2.5 text-xs sm:text-sm font-medium text-encre leading-snug">
           <svg
             viewBox="0 0 20 20"
             fill="none"
@@ -37,7 +37,7 @@ export const AccrocheCommerciale: React.FC = () => {
           <span>{t('accroche1')}</span>
         </li>
 
-        <li className="flex items-center gap-2 text-[0.875rem] font-medium text-encre leading-snug">
+        <li className="flex items-center gap-2.5 text-xs sm:text-sm font-medium text-encre leading-snug">
           <svg
             viewBox="0 0 20 20"
             fill="none"
@@ -56,7 +56,7 @@ export const AccrocheCommerciale: React.FC = () => {
           <span>{t('accroche2')}</span>
         </li>
 
-        <li className="flex items-center gap-2 text-[0.875rem] font-medium text-encre leading-snug">
+        <li className="flex items-center gap-2.5 text-xs sm:text-sm font-medium text-encre leading-snug">
           <svg
             viewBox="0 0 20 20"
             fill="none"

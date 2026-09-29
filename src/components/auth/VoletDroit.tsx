@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { AccrocheCommerciale } from './AccrocheCommerciale';
 import { EtapesCommentCaMarche } from './EtapesCommentCaMarche';
+import { FormulairePilote } from './FormulairePilote';
 
 export type OngletActif = 'pilote' | 'connexion';
 
@@ -84,12 +85,12 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
   };
 
   return (
-    <div className="w-full max-w-[470px] mx-auto my-auto flex flex-col justify-center">
+    <div className="w-full max-w-[480px] mx-auto flex flex-col space-y-6">
       {/* 1. Accroche commerciale au-dessus du cadre */}
       <AccrocheCommerciale />
 
       {/* 2. Cadre à onglets marqué conteneur (@container) */}
-      <div className="@container w-full bg-white/95 backdrop-blur-[12px] border border-ligne/80 rounded-carte shadow-hud p-5 text-encre">
+      <div className="@container w-full bg-white/95 backdrop-blur-[12px] border border-ligne/80 rounded-carte shadow-hud p-5 sm:p-6 text-encre">
         {/* Barre d'onglets (Gouttière #F1F5F9, onglets 44px) */}
         <div
           role="tablist"
@@ -107,7 +108,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
             tabIndex={ongletActif === 'pilote' ? 0 : -1}
             onClick={() => onSelectOnglet('pilote')}
             onKeyDown={(e) => handleTabKeyDown(e, 'pilote')}
-            className={`h-[44px] flex items-center justify-center font-semibold text-xs rounded-champ transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 cursor-pointer ${
+            className={`h-[44px] flex items-center justify-center font-semibold text-xs sm:text-sm rounded-champ transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 cursor-pointer ${
               ongletActif === 'pilote'
                 ? 'bg-teal text-white shadow-xs'
                 : 'text-discret hover:text-encre'
@@ -127,7 +128,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
             tabIndex={ongletActif === 'connexion' ? 0 : -1}
             onClick={() => onSelectOnglet('connexion')}
             onKeyDown={(e) => handleTabKeyDown(e, 'connexion')}
-            className={`h-[44px] flex items-center justify-center font-semibold text-xs rounded-champ transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 cursor-pointer ${
+            className={`h-[44px] flex items-center justify-center font-semibold text-xs sm:text-sm rounded-champ transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 cursor-pointer ${
               ongletActif === 'connexion'
                 ? 'bg-teal text-white shadow-xs'
                 : 'text-discret hover:text-encre'
@@ -137,66 +138,17 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
           </button>
         </div>
 
-        {/* Panneaux sous les onglets (marge haute 16px) */}
-        <div className="mt-4">
-          {/* PANNEAU 1 : Accès Pilote (Provisoire avant LOT 5B) */}
+        {/* Panneaux sous les onglets */}
+        <div className="mt-5">
+          {/* PANNEAU 1 : Accès Pilote */}
           {ongletActif === 'pilote' && (
             <div
               role="tabpanel"
               id="panel-pilote"
               aria-labelledby="tab-pilote"
-              className="space-y-4 animate-in fade-in duration-200"
+              className="animate-in fade-in duration-200"
             >
-              <div className="text-center pb-2 border-b border-ligne">
-                <h3 className="text-sm font-bold font-titre text-encre">
-                  {t('pilotTitre')}
-                </h3>
-                <p className="text-xs text-discret mt-0.5">
-                  {t('accrocheSousTitre')}
-                </p>
-              </div>
-
-              {/* Étapes résumées */}
-              <div className="space-y-2.5 py-1">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-champ bg-slate-50 border border-ligne/80 text-xs">
-                  <span className="w-5 h-5 rounded-full bg-teal text-white font-bold flex items-center justify-center text-[10px] shrink-0">
-                    1
-                  </span>
-                  <div>
-                    <span className="font-semibold text-encre block">{t('etape1Titre')}</span>
-                    <span className="text-discret text-[11px]">{t('etape1Texte')}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 p-2.5 rounded-champ bg-slate-50 border border-ligne/80 text-xs">
-                  <span className="w-5 h-5 rounded-full bg-teal text-white font-bold flex items-center justify-center text-[10px] shrink-0">
-                    2
-                  </span>
-                  <div>
-                    <span className="font-semibold text-encre block">{t('etape2Titre')}</span>
-                    <span className="text-discret text-[11px]">{t('etape2Texte')}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 p-2.5 rounded-champ bg-slate-50 border border-ligne/80 text-xs">
-                  <span className="w-5 h-5 rounded-full bg-teal text-white font-bold flex items-center justify-center text-[10px] shrink-0">
-                    3
-                  </span>
-                  <div>
-                    <span className="font-semibold text-encre block">{t('etape3Titre')}</span>
-                    <span className="text-discret text-[11px]">{t('etape3Texte')}</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onSelectOnglet('connexion')}
-                className="w-full py-2.5 px-4 rounded-champ bg-cta hover:bg-cta-survol text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                <span>{t('pilotEnvoyer')}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <FormulairePilote firstInputRef={firstInputRef} />
             </div>
           )}
 
@@ -209,7 +161,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
               className="space-y-4 animate-in fade-in duration-200"
             >
               <div className="text-center pb-2 border-b border-ligne">
-                <h3 className="text-sm font-bold font-titre text-encre">
+                <h3 className="text-sm sm:text-base font-bold font-titre text-encre">
                   {t('connexionTitre')}
                 </h3>
                 <p className="text-xs text-discret mt-0.5 leading-relaxed">
@@ -242,7 +194,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
                         if (formError) setFormError(null);
                       }}
                       placeholder="vous@entreprise.cm"
-                      className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-champ border border-ligne bg-surface text-encre focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-colors placeholder:text-discret"
+                      className="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm rounded-champ border border-ligne bg-surface text-encre focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-colors placeholder:text-discret"
                     />
                   </div>
                 </div>
@@ -265,7 +217,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
                         if (formError) setFormError(null);
                       }}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 text-xs rounded-champ border border-ligne bg-surface text-encre focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-colors placeholder:text-discret"
+                      className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-champ border border-ligne bg-surface text-encre focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-colors placeholder:text-discret"
                     />
                     <button
                       type="button"
@@ -282,7 +234,7 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-champ text-xs font-semibold text-white bg-teal hover:opacity-90 active:opacity-95 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 sm:py-3 px-4 rounded-champ text-xs sm:text-sm font-semibold text-white bg-teal hover:opacity-90 active:opacity-95 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-focus focus-visible:ring-offset-2 transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {loading ? (
                     <span>{t('connexionEnCours')}</span>
@@ -295,22 +247,14 @@ export const VoletDroit: React.FC<VoletDroitProps> = ({
                 </button>
               </form>
 
-              <div className="mt-4 pt-4 border-t border-ligne flex items-start gap-2 text-[11px] text-discret leading-relaxed">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal shrink-0 mt-0.5" />
+              <div className="mt-4 pt-4 border-t border-ligne flex items-start gap-2 text-[11px] sm:text-xs text-discret leading-relaxed">
+                <ShieldCheck className="w-4 h-4 text-teal shrink-0 mt-0.5" />
                 <span>{t('connexionSousTitre')}</span>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* 3. Trois étapes sous le cadre à onglets (visible si hauteur >= 940px sur PC, toujours sur mobile) */}
-      <EtapesCommentCaMarche />
-
-      {/* 4. Ligne des sources sous les étapes (masquée sous 700px de hauteur sur PC) */}
-      <p className="mt-3.5 text-center text-[0.8125rem] text-discret hide-sources-under-700 select-none">
-        {t('sources')}
-      </p>
     </div>
   );
 };

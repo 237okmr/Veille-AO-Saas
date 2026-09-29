@@ -23,12 +23,12 @@ export const RadarSvg: React.FC<RadarSvgProps> = ({
   const { langue, t } = useLangue();
 
   return (
-    <div className="w-full flex items-center justify-center my-auto">
-      {/* Conteneur carré responsive agrandi */}
+    <div className="w-full flex items-center justify-center">
+      {/* Conteneur carré responsive */}
       <div
         className="relative select-none flex items-center justify-center max-w-full"
         style={{
-          width: 'clamp(290px, 30vw, 460px)',
+          width: 'clamp(260px, 26vw, 400px)',
           aspectRatio: '1 / 1'
         }}
       >

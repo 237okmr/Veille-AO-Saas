@@ -9,6 +9,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   apiConfig: ApiConfigInfo | null;
   login: (email: string, motDePasse: string) => Promise<User>;
+  loginParLien: (jeton: string) => Promise<User>;
   register: (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -140,6 +141,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Connexion par le lien personnel des e-mails d'alerte (jeton à usage unique).
+  // N'utilise pas l'état global « loading » : l'écran d'accès gère lui-même son attente,
+  // et l'échec n'affiche aucun message ici (l'appelant décide quoi montrer).
+  const loginParLien = async (jeton: string): Promise<User> => {
+    const res = await api.loginParLien(jeton);
+    if (res.succes === true && res.donnees && res.donnees.token) {
+      const authenticatedUser = res.donnees;
+      setToken(res.donnees.token);
+      setStoredUser(authenticatedUser);
+      setUser(authenticatedUser);
+      toast.success('Connexion réussie.', 'Bienvenue dans votre espace personnel.');
+
+      const targetPath = authenticatedUser.role === 'ADMIN' ? '/admin' : '/client';
+      window.history.pushState({}, '', targetPath);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+
+      return authenticatedUser;
+    }
+    throw new Error(res.message || 'Ce lien a expiré ou a déjà été utilisé. Connectez-vous avec votre adresse e-mail et votre mot de passe.');
+  };
+
   const register = async (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }): Promise<User> => {
     setLoading(true);
     try {
@@ -187,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         apiConfig,
         login,
+        loginParLien,
         register,
         logout,
         refreshUser,

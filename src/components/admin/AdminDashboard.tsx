@@ -10,10 +10,7 @@ import {
   Mail,
   MessageSquare,
   ShieldCheck,
-  TrendingUp,
   Activity,
-  CheckCircle2,
-  AlertTriangle,
   Zap,
   ArrowRight
 } from 'lucide-react';
@@ -49,12 +46,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       <div className="p-6 space-y-6 max-w-7xl mx-auto animate-pulse">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+            <div key={i} className="h-28 rounded-2xl bg-slate-200" />
           ))}
         </div>
       </div>
     );
   }
+
+  const alertesSubtitle =
+    stats?.alertes &&
+    typeof stats.alertes.enAttente === 'number' &&
+    typeof stats.alertes.envoyees === 'number'
+      ? `${stats.alertes.enAttente} en attente · ${stats.alertes.envoyees} envoyées`
+      : 'Matches IA validés';
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
@@ -77,8 +81,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => onNavigate('admin-pipeline')}
-            className="flex items-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-teal-700 hover:bg-teal-800 text-white transition-all shadow-xs hover:shadow cursor-pointer"
+            className="flex items-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-teal-700 hover:bg-teal-800 text-white transition-all shadow-xs hover:shadow cursor-pointer focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600"
           >
             <Zap className="w-3.5 h-3.5 text-amber-300" />
             <span>Exécuter Pipeline</span>
@@ -86,102 +91,97 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </div>
       </div>
 
-      {/* Primary KPI Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      {/* Primary KPI Grid - 5 honest indicators */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Clients */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-clients')}
-          className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500/60 transition-all cursor-pointer shadow-xs"
+          className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-500/60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer shadow-xs"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Clients</span>
             <Building2 className="w-4 h-4 text-teal-600" />
           </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+          <p className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
             {stats?.clients?.total ?? stats?.totalClients ?? 0}
           </p>
           <span className="text-[11px] text-emerald-600 font-semibold">
             {stats?.clients?.actifs ?? stats?.clientsActifs ?? 0} actifs
           </span>
-        </div>
+        </button>
 
         {/* Utilisateurs */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-users')}
-          className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500/60 transition-all cursor-pointer shadow-xs"
+          className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-500/60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer shadow-xs"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Utilisateurs</span>
             <Users className="w-4 h-4 text-teal-600" />
           </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+          <p className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
             {stats?.utilisateurs?.total ?? stats?.totalUtilisateurs ?? 0}
           </p>
           <span className="text-[11px] text-slate-500">Comptes enregistrés</span>
-        </div>
+        </button>
 
-        {/* Avis Collectés */}
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+        {/* Avis Collectés (Non cliquable) */}
+        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Avis Scrapés</span>
             <FileText className="w-4 h-4 text-teal-600" />
           </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+          <p className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
             {stats?.avis?.total ?? stats?.totalAvisScrapes ?? 0}
           </p>
-          <span className="text-[11px] text-slate-500">ARMP & Ministères</span>
+          <span className="text-[11px] text-slate-500">Toutes sources confondues</span>
         </div>
 
-        {/* Alertes Générées */}
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+        {/* Alertes Ciblées (Cliquable vers admin-alertes) */}
+        <button
+          type="button"
+          onClick={() => onNavigate('admin-alertes')}
+          className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-500/60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer shadow-xs"
+        >
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Alertes Ciblées</span>
             <Bell className="w-4 h-4 text-amber-500" />
           </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+          <p className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
             {stats?.alertes?.total ?? stats?.totalAlertesGenerees ?? 0}
           </p>
-          <span className="text-[11px] text-slate-500">Matches IA validés</span>
-        </div>
-
-        {/* Taux de Match */}
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
-            <span>Taux Match IA</span>
-            <TrendingUp className="w-4 h-4 text-teal-600" />
-          </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
-            {stats?.tauxMatchMoyen ?? '78%'}
-          </p>
-          <span className="text-[11px] text-teal-600 dark:text-teal-400">Précision sémantique</span>
-        </div>
+          <span className="text-[11px] text-slate-500">{alertesSubtitle}</span>
+        </button>
 
         {/* Sessions Actives */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-sessions')}
-          className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500/60 transition-all cursor-pointer shadow-xs"
+          className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-500/60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer shadow-xs"
         >
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Sessions</span>
             <Activity className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white tabular-nums">
+          <p className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
             {stats?.sessions?.actives ?? stats?.sessionsActives ?? 0}
           </p>
           <span className="text-[11px] text-emerald-600 font-semibold">En ligne</span>
-        </div>
+        </button>
       </div>
 
       {/* Quotas & System Status Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gemini AI Quota */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-teal-600" />
-              <h3 className="text-xs font-bold text-slate-900 dark:text-white">Quota Gemini AI (Scoring)</h3>
+              <h3 className="text-xs font-bold text-slate-900">Quota Gemini AI (Scoring)</h3>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
               NOMINAL
             </span>
           </div>
@@ -189,11 +189,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-slate-500">Jetons consommés :</span>
-              <span className="font-bold text-slate-900 dark:text-white">
+              <span className="font-bold text-slate-900">
                 {(stats?.quotas?.geminiAi?.utilise ?? stats?.quotas?.geminiAujourdhui ?? 0).toLocaleString()} / {(stats?.quotas?.geminiAi?.total ?? 10000).toLocaleString()}
               </span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-teal-600 h-full rounded-full"
                 style={{ width: `${stats?.quotas?.geminiAi?.pourcentage ?? 18}%` }}
@@ -206,13 +206,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </div>
 
         {/* Gmail API Quota */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-teal-600" />
-              <h3 className="text-xs font-bold text-slate-900 dark:text-white">Envois Emails (Gmail API)</h3>
+              <h3 className="text-xs font-bold text-slate-900">Envois Emails (Gmail API)</h3>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
               NOMINAL
             </span>
           </div>
@@ -220,11 +220,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-slate-500">Emails quotidiens :</span>
-              <span className="font-bold text-slate-900 dark:text-white">
+              <span className="font-bold text-slate-900">
                 {stats?.quotas?.gmailApi?.utilise ?? (100 - (stats?.quotas?.gmailRestant ?? 91))} / {stats?.quotas?.gmailApi?.total ?? 100}
               </span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-teal-600 h-full rounded-full"
                 style={{ width: `${stats?.quotas?.gmailApi?.pourcentage ?? 9}%` }}
@@ -237,13 +237,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         </div>
 
         {/* WhatsApp Bot API Quota */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-emerald-600" />
-              <h3 className="text-xs font-bold text-slate-900 dark:text-white">Messages WhatsApp Bot</h3>
+              <h3 className="text-xs font-bold text-slate-900">Messages WhatsApp Bot</h3>
             </div>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
               NOMINAL
             </span>
           </div>
@@ -251,11 +251,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-mono">
               <span className="text-slate-500">Alertes WhatsApp :</span>
-              <span className="font-bold text-slate-900 dark:text-white">
+              <span className="font-bold text-slate-900">
                 {stats?.quotas?.whatsappApi?.utilise ?? 45} / {stats?.quotas?.whatsappApi?.total ?? 500}
               </span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-emerald-500 h-full rounded-full"
                 style={{ width: `${stats?.quotas?.whatsappApi?.pourcentage ?? 9}%` }}
@@ -270,47 +270,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* Quick Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-clients')}
-          className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500 transition-all cursor-pointer group shadow-xs space-y-2"
+          className="w-full text-left p-5 rounded-2xl border border-slate-200 bg-white hover:border-teal-500 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer group shadow-xs space-y-2"
         >
           <div className="flex items-center justify-between">
             <Building2 className="w-5 h-5 text-teal-700" />
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-1" />
           </div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Gérer les Entreprises</h4>
-          <p className="text-xs text-slate-500">
+          <h4 className="text-sm font-bold text-slate-900">Gérer les Entreprises</h4>
+          <p className="text-xs text-slate-500 font-normal">
             Créer des clients, configurer leurs critères régionaux et régénérer leurs profils IA.
           </p>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-pipeline')}
-          className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500 transition-all cursor-pointer group shadow-xs space-y-2"
+          className="w-full text-left p-5 rounded-2xl border border-slate-200 bg-white hover:border-teal-500 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer group shadow-xs space-y-2"
         >
           <div className="flex items-center justify-between">
             <Zap className="w-5 h-5 text-amber-500" />
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-1" />
           </div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Actions du Pipeline</h4>
-          <p className="text-xs text-slate-500">
+          <h4 className="text-sm font-bold text-slate-900">Actions du Pipeline</h4>
+          <p className="text-xs text-slate-500 font-normal">
             Lancer manuellement la collecte ARMP, le scoring sémantique et la distribution d'alertes.
           </p>
-        </div>
+        </button>
 
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('admin-audit')}
-          className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-teal-500 transition-all cursor-pointer group shadow-xs space-y-2"
+          className="w-full text-left p-5 rounded-2xl border border-slate-200 bg-white hover:border-teal-500 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer group shadow-xs space-y-2"
         >
           <div className="flex items-center justify-between">
             <ShieldCheck className="w-5 h-5 text-teal-600" />
             <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-transform group-hover:translate-x-1" />
           </div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">Journal d'Audit</h4>
-          <p className="text-xs text-slate-500">
+          <h4 className="text-sm font-bold text-slate-900">Journal d'Audit</h4>
+          <p className="text-xs text-slate-500 font-normal">
             Consulter l'historique complet des actions, des connexions et des modifications.
           </p>
-        </div>
+        </button>
       </div>
     </div>
   );
