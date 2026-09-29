@@ -1,13 +1,13 @@
-# Cameroon Marchés Publics - Veille & Alertes AO (SaaS)
+# Market Advisor CM
 
-Plateforme SaaS intelligente de veille, de scoring IA et de ciblage des appels d'offres publics camerounais (ARMP, DGTCFM, Ministères, Collectivités territoriales décentralisées, Sociétés d'État).
+Plateforme SaaS intelligente de veille et d'alertes sur les appels d'offres publics camerounais (ARMP, COLEPS, DGTCFM, ministères, mairies, FEICOM et bailleurs internationaux).
 
 ---
 
 ## 🚀 Architecture Technique
 
-- **Frontend** : React 19, TypeScript, Tailwind CSS, Lucide Icons, Theme Switcher (Clair / Sombre), Tableaux de bord analytiques.
-- **Backend Proxy** : Node.js Express (`server.ts`). Le serveur sert de passerelle sécurisée entre l'interface utilisateur et votre Google Apps Script Web App pour éliminer les contraintes CORS, gérer les redirections 302 de Google, et injecter les jetons d'authentification Bearer.
+- **Frontend** : React 19, TypeScript, Tailwind CSS, Framer Motion, Lucide Icons, support bilingue (Français / Anglais), radar interactif et tableaux de bord analytiques.
+- **Backend Proxy** : Node.js Express (`server.ts`). Le serveur sert de passerelle sécurisée entre l'interface utilisateur et votre Google Apps Script Web App pour éliminer les contraintes CORS, gérer les redirections de Google, et injecter les jetons d'authentification Bearer.
 - **API Distante** : Google Apps Script REST Web App.
 - **Mode Sandbox / Simulation Intégré** : Si `API_URL` n'est pas encore définie, l'application active automatiquement son moteur de données simulées riche et réaliste du Cameroun pour permettre une validation visuelle et fonctionnelle instantanée.
 
@@ -44,7 +44,6 @@ Pour alterner entre votre déploiement de **Production** et votre déploiement d
    ```env
    API_URL="https://script.google.com/macros/s/AKfycb...DEV_TEST_ID.../exec"
    ```
-3. Vous pouvez également cliquer sur le badge **« Mode API / Sandbox »** dans la barre supérieure de l'application pour tester en direct le ping de votre déploiement avec affichage de la latence en millisecondes.
 
 ---
 
@@ -63,16 +62,5 @@ Pour alterner entre votre déploiement de **Production** et votre déploiement d
 
 ---
 
-## 👥 Comptes de Démonstration Intégrés
-
-Pour tester immédiatement sans saisie manuelle, 2 boutons d'accès rapide sont disponibles sur l'écran d'accueil :
-
-| Rôle | Email | Mot de passe | Description |
-| :--- | :--- | :--- | :--- |
-| **Administrateur** | `admin@marchespublics.cm` | `admin123` | Supervision globale, gestion clients & users, pipeline scraping ARMP |
-| **Client Entreprise** | `client@cameroon-infra.cm` | `client123` | Dashboard, alertes scorées, DAO, profil IA & critères |
-
----
-
 ## 📄 Licence
-Propriété exclusive de la plateforme de Veille des Marchés Publics Camerounais.
+Propriété exclusive de la plateforme Market Advisor CM.

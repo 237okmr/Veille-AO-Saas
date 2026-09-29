@@ -410,10 +410,20 @@ export interface AlertFilterOptions {
   procedure?: string;
   scoreMin?: number;
   search?: string;
-  sortBy?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: 'date' | 'score' | 'deadline' | string;
   sortOrder?: 'asc' | 'desc';
   limit?: number;
   offset?: number;
+}
+
+export interface SavedSearch {
+  idRecherche: string;
+  nom: string;
+  filtres: AlertFilterOptions;
+  creeParEmail: string;
+  dateCreation: string;
 }
 
 export const OFFICIAL_CAMEROON_REGIONS = [

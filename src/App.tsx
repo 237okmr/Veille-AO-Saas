@@ -6,6 +6,7 @@
 import React from 'react';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LangueProvider } from './context/LangueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { AppLayout } from './components/layout/AppLayout';
@@ -51,7 +52,7 @@ const MainRouter: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-page flex flex-col items-center justify-center space-y-4">
         <div className="w-10 h-10 border-3 border-teal-700/20 border-t-teal-700 rounded-full animate-spin" />
         <p className="text-xs font-semibold text-slate-500 font-mono tracking-wider">
           CHARGEMENT DE LA PLATEFORME...
@@ -66,11 +67,13 @@ const MainRouter: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <MainRouter />
-        </AuthProvider>
-      </ToastProvider>
+      <LangueProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <MainRouter />
+          </AuthProvider>
+        </ToastProvider>
+      </LangueProvider>
     </ThemeProvider>
   );
 }

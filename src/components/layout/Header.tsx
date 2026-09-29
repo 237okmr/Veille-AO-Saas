@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import {
-  Sun,
-  Moon,
   LogOut,
   User as UserIcon,
   ShieldCheck,
@@ -30,7 +27,6 @@ export const Header: React.FC<HeaderProps> = ({
   unreadAlertsCount = 0
 }) => {
   const { user, logout, apiConfig } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -116,15 +112,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 3: Actions & User Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Dark / Light mode toggle */}
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'}
-          className="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-        </button>
-
         {/* User profile menu */}
         <div className="relative" ref={dropdownRef}>
           <button

@@ -94,7 +94,7 @@ export const RadarSweep: React.FC = () => {
 
   return (
     <div
-      className="h-full w-full bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 lg:p-7 font-sans relative overflow-hidden"
+      className="h-full w-full bg-page text-slate-900 flex flex-col justify-between p-4 sm:p-6 lg:p-7 font-sans relative overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => {
         setIsPaused(false);
@@ -106,7 +106,7 @@ export const RadarSweep: React.FC = () => {
         <div>
           {/* Over-title uppercase */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/80 border border-teal-200 dark:border-teal-800 text-[10px] font-black tracking-wider uppercase text-teal-800 dark:text-teal-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[10px] font-black tracking-wider uppercase text-teal-800">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-600"></span>
@@ -116,13 +116,13 @@ export const RadarSweep: React.FC = () => {
           </div>
 
           {/* Main H2 Title */}
-          <h2 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 font-titre">
             Flux d'opportunités en détection active
           </h2>
 
           {/* Dynamic Counter from DASHBOARD */}
-          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">
-            <span className="font-bold text-teal-700 dark:text-teal-400 font-mono">
+          <p className="text-xs text-slate-600 font-medium mt-0.5">
+            <span className="font-bold text-teal-700 font-mono">
               {radarData?.totalAvisAnalysesPeriode || 87} avis
             </span>{' '}
             analysés cette semaine par IA · ARMP, COLEPS, ONU & Bailleurs
@@ -130,13 +130,13 @@ export const RadarSweep: React.FC = () => {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 rounded-xl text-xs font-medium self-start sm:self-auto border border-slate-200/80 dark:border-slate-800 shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-slate-200/80 rounded-xl text-xs font-medium self-start sm:self-auto border border-slate-200/80 shrink-0">
           <button
             onClick={() => setActiveTab('ALL')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'ALL'
-                ? 'bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-300 font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                ? 'bg-white text-teal-800 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Tous ({radarData?.blips.length || 8})
@@ -145,8 +145,8 @@ export const RadarSweep: React.FC = () => {
             onClick={() => setActiveTab('NATIONAL')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'NATIONAL'
-                ? 'bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-300 font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                ? 'bg-white text-teal-800 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             ARMP / National
@@ -155,8 +155,8 @@ export const RadarSweep: React.FC = () => {
             onClick={() => setActiveTab('INTERNATIONAL')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'INTERNATIONAL'
-                ? 'bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                ? 'bg-white text-sky-700 font-bold shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Bailleurs
@@ -164,13 +164,13 @@ export const RadarSweep: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. MAIN RADAR CONTAINER WITH DECOUPLED HUD OVERLAY (Bug Fix: NO OVERFLOW CUTOFF) */}
+      {/* 2. MAIN RADAR CONTAINER WITH DECOUPLED HUD OVERLAY */}
       <div className="flex-1 flex flex-col items-center justify-center relative my-1 min-h-[380px] sm:min-h-[460px] lg:min-h-[500px]">
         
-        {/* CIRCULAR RADAR GRAPHIC WRAPPER (Overflow Hidden strictly inside circle) */}
+        {/* CIRCULAR RADAR GRAPHIC WRAPPER */}
         <div className="relative w-[300px] h-[320px] sm:w-[420px] sm:h-[420px] lg:w-[480px] lg:h-[480px] xl:w-[520px] xl:h-[520px]">
           
-          <div className="w-full h-full rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-xl flex items-center justify-center overflow-hidden relative">
+          <div className="w-full h-full rounded-full bg-white border border-slate-200 shadow-xl flex items-center justify-center overflow-hidden relative">
             
             {/* SVG Grid & Dotted Axes */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
@@ -215,7 +215,7 @@ export const RadarSweep: React.FC = () => {
             </motion.div>
 
             {/* Central Origin Hub */}
-            <div className="absolute w-3.5 h-3.5 rounded-full bg-teal-700 border-2 border-white dark:border-slate-900 shadow-md z-20 flex items-center justify-center">
+            <div className="absolute w-3.5 h-3.5 rounded-full bg-teal-700 border-2 border-white shadow-md z-20 flex items-center justify-center">
               <div className="w-1 h-1 rounded-full bg-white animate-ping" />
             </div>
 
@@ -264,7 +264,7 @@ export const RadarSweep: React.FC = () => {
 
                   {/* Micro floating amount tag ONLY when active */}
                   {isActive && (
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-900/95 text-white shadow-md border border-slate-700/80 z-40 animate-in fade-in zoom-in-95">
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap text-[9px] font-black px-2 py-0.5 rounded-full bg-slate-900 text-white shadow-md border border-slate-700/80 z-40 animate-in fade-in zoom-in-95">
                       {formatFcfa(blip.montantEstime)}
                     </span>
                   )}
@@ -273,7 +273,7 @@ export const RadarSweep: React.FC = () => {
             })}
           </div>
 
-          {/* 3. DECOUPLED HUD TENDER CARD OVERLAY (Positioned safely over bottom of radar, Z-INDEX 40, NEVER CLIPPED) */}
+          {/* 3. DECOUPLED HUD TENDER CARD OVERLAY */}
           {activeBlip && (
             <div className="absolute -bottom-2 left-0 right-0 sm:-bottom-4 z-40 px-2 sm:px-4">
               <AnimatePresence mode="wait">
@@ -283,48 +283,48 @@ export const RadarSweep: React.FC = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.98 }}
                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/10 rounded-2xl p-3 sm:p-4 text-left transition-all"
+                  className="w-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-xl shadow-slate-900/10 rounded-2xl p-3 sm:p-4 text-left transition-all"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <div className="flex items-center gap-2">
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                           activeBlip.sourceType === 'NATIONAL'
-                            ? 'bg-teal-50 text-teal-800 border border-teal-200/80 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-800'
-                            : 'bg-sky-50 text-sky-800 border border-sky-200/80 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800'
+                            ? 'bg-teal-50 text-teal-800 border border-teal-200/80'
+                            : 'bg-sky-50 text-sky-800 border border-sky-200/80'
                         }`}
                       >
                         {activeBlip.sourceNom}
                       </span>
 
-                      <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">
                         {activeBlip.typeProcedure}
                       </span>
                     </div>
 
                     {/* AI Score Badge */}
-                    <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-lg text-xs font-black text-amber-700 dark:text-amber-300">
+                    <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg text-xs font-black text-amber-700">
                       <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                       <span>{activeBlip.scoreIA.toFixed(1)}/5</span>
                     </div>
                   </div>
 
-                  {/* Title (Max 2 lines, balanced) */}
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug mb-2 line-clamp-2">
+                  {/* Title */}
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug mb-2 line-clamp-2">
                     {activeBlip.titreAO}
                   </h3>
 
                   {/* Metadata Row */}
-                  <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
-                    <div className="flex items-center gap-1.5 truncate text-slate-600 dark:text-slate-300 text-[11px]">
+                  <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-slate-200/60">
+                    <div className="flex items-center gap-1.5 truncate text-slate-600 text-[11px]">
                       <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="truncate max-w-[140px] sm:max-w-[220px]">{activeBlip.maitreOuvrage}</span>
-                      <span className="text-slate-300 dark:text-slate-700">·</span>
-                      <span className="text-teal-700 dark:text-teal-400 font-semibold">{activeBlip.region}</span>
+                      <span className="text-slate-300">·</span>
+                      <span className="text-teal-700 font-semibold">{activeBlip.region}</span>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="font-extrabold text-teal-800 dark:text-teal-300 font-mono text-xs sm:text-sm">
+                      <span className="font-extrabold text-teal-800 font-mono text-xs sm:text-sm">
                         {formatFcfa(activeBlip.montantEstime)}
                       </span>
                     </div>
@@ -336,13 +336,13 @@ export const RadarSweep: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. SOFT SINGLE-LINE CTA AT BOTTOM (Section 3) */}
-      <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-center shrink-0 z-20">
-        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+      {/* 4. SOFT SINGLE-LINE CTA AT BOTTOM */}
+      <div className="mt-3 pt-3 border-t border-slate-200/60 text-center shrink-0 z-20">
+        <p className="text-xs text-slate-600 font-medium">
           Vous souhaitez calibrer ce radar pour votre entreprise ?{' '}
           <button
             onClick={() => setShowContactModal(true)}
-            className="text-teal-700 dark:text-teal-400 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-teal-700 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>Demander un accès pilote</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -353,25 +353,25 @@ export const RadarSweep: React.FC = () => {
       {/* CONTACT & PILOT ACCESS MODAL */}
       {showContactModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 text-slate-900 dark:text-slate-100 shadow-2xl relative">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 text-slate-900 shadow-2xl relative">
             <button
               onClick={() => setShowContactModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-400">
+              <div className="p-2.5 rounded-xl bg-teal-50 text-teal-700">
                 <PhoneCall className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Accès Pilote & Calibration Radar</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Market Advisor CM · Service Entreprises</p>
+                <h3 className="text-lg font-bold text-slate-900">Accès Pilote & Calibration Radar</h3>
+                <p className="text-xs text-slate-500">Market Advisor CM · Service Entreprises</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
               Consultez nos experts pour calibrer vos règles de ciblage automatique sur l'ensemble des marchés nationaux (ARMP, Ministères, FEICOM) et internationaux (World Bank, BAD, agences ONU).
             </p>
 
@@ -388,15 +388,15 @@ export const RadarSweep: React.FC = () => {
 
               <a
                 href="mailto:contact@marketadvisor.cm?subject=Demande%20d%27acc%C3%A8s%20pilote%20Market%20Advisor%20CM"
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2.5 transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2.5 transition-colors border border-slate-200 cursor-pointer"
               >
-                <ExternalLink className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <ExternalLink className="w-4 h-4 text-teal-600" />
                 <span>Envoyer un email d'accès pilote</span>
               </a>
             </div>
 
-            <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
               <span>
                 Activation sous 24h ouvrées avec paramétrage sur-mesure et essais gratuits.
               </span>

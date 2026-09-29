@@ -14,6 +14,7 @@ import {
   Settings,
   Sparkles,
   FileSpreadsheet,
+  CalendarClock,
   Zap,
   X
 } from 'lucide-react';
@@ -39,6 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const clientNav = [
     { id: 'client-dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
     { id: 'client-alerts', label: 'Mes alertes AO', icon: Bell, count: unreadCount },
+    { id: 'client-deadlines', label: 'Calendrier des échéances', icon: CalendarClock },
     { id: 'client-profile', label: 'Profil Entreprise & IA', icon: Building2 },
     { id: 'client-preferences', label: 'Notifications & Alertes', icon: Sliders },
     { id: 'client-account', label: 'Mon Compte', icon: User }

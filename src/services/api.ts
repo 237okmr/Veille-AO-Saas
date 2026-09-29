@@ -10,6 +10,7 @@ import {
   TenderAlert,
   AlertNote,
   SourceFraicheur,
+  SavedSearch,
   AlertCounts,
   ClientDashboardStats,
   RegionStat,
@@ -207,6 +208,8 @@ export const api = {
     if (filters.procedure) query.set('procedure', filters.procedure);
     if (filters.scoreMin) query.set('scoreMin', String(filters.scoreMin));
     if (filters.search) query.set('search', filters.search);
+    if (filters.dateFrom) query.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) query.set('dateTo', filters.dateTo);
     if (filters.sortBy) query.set('sortBy', filters.sortBy);
     if (filters.sortOrder) query.set('sortOrder', filters.sortOrder);
     if (filters.limit) query.set('limit', String(filters.limit));
@@ -224,6 +227,20 @@ export const api = {
   getAlertCounts: () => request<AlertCounts>('/client/alerts/count'),
 
   getSources: () => request<{ sources: SourceFraicheur[] }>('/client/sources'),
+
+  getSavedSearches: () => request<{ total: number; recherches: SavedSearch[] }>('/client/alerts/saved-searches'),
+
+  createSavedSearch: (payload: { nom: string; filtres: AlertFilterOptions }) =>
+    request<SavedSearch>('/client/alerts/saved-searches', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  toggleSavedSearch: (payload: { idRecherche: string; actif: 'OUI' | 'NON' }) =>
+    request<{ idRecherche: string; actif: string }>('/client/alerts/saved-searches/toggle', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
 
   markAlert: (payload: { idMatch: string; etat: TenderAlert['etat']; note?: string }) =>
     request<TenderAlert>('/client/alerts/mark', {

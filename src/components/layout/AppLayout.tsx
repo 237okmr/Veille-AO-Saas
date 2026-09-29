@@ -6,6 +6,7 @@ import { ClientDashboard } from '../client/ClientDashboard';
 import { ClientAlerts } from '../client/ClientAlerts';
 import { ClientProfile } from '../client/ClientProfile';
 import { ClientPreferences } from '../client/ClientPreferences';
+import { ClientDeadlines } from '../client/ClientDeadlines';
 import { ClientAccount } from '../client/ClientAccount';
 import { AdminDashboard } from '../admin/AdminDashboard';
 import { AdminClients } from '../admin/AdminClients';
@@ -87,6 +88,8 @@ export const AppLayout: React.FC = () => {
         return <ClientProfile />;
       case 'client-preferences':
         return <ClientPreferences />;
+      case 'client-deadlines':
+        return <ClientDeadlines />;
       case 'client-account':
         return <ClientAccount />;
 

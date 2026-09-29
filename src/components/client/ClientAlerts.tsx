@@ -4,6 +4,7 @@ import {
   TenderAlert,
   AlertCounts,
   AlertFilterOptions,
+  SavedSearch,
   CAMEROON_REGIONS,
   CAMEROON_PROCEDURES
 } from '../../types';
@@ -16,6 +17,7 @@ import {
   Calendar,
   Sparkles,
   Bookmark,
+  BookmarkPlus,
   CheckCircle,
   XCircle,
   EyeOff,
@@ -26,7 +28,8 @@ import {
   SlidersHorizontal,
   RotateCcw,
   FileSpreadsheet,
-  Archive
+  Archive,
+  X
 } from 'lucide-react';
 import { AlertDetailModal } from './AlertDetailModal';
 import { useToast } from '../../context/ToastContext';
@@ -39,6 +42,7 @@ export const ClientAlerts: React.FC = () => {
   const [selectedAlert, setSelectedAlert] = useState<TenderAlert | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showExpired, setShowExpired] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const toast = useToast();
 
   // Filter states
@@ -92,6 +96,68 @@ export const ClientAlerts: React.FC = () => {
   useEffect(() => {
     loadAlerts();
   }, [loadAlerts]);
+
+  useEffect(() => {
+    api.getSavedSearches()
+      .then((res) => setSavedSearches(res.donnees?.recherches || []))
+      .catch(() => {});
+  }, []);
+
+  const handleApplySavedSearch = (s: SavedSearch) => {
+    const f = s.filtres || {};
+    setSearch(f.search || '');
+    setSelectedState(f.etat || '');
+    setSelectedRegion(f.region || '');
+    setSelectedProcedure(f.procedure || '');
+    setScoreMin(Number(f.scoreMin) || 0);
+    setOnlyUnread(f.lu === 'false');
+    setShowExpired(f.expire === 'OUI');
+    if (f.sortBy) setSortBy(f.sortBy);
+    if (f.sortOrder) setSortOrder(f.sortOrder);
+    setPage(1);
+    toast.success('Recherche appliquée', s.nom);
+  };
+
+  const handleSaveCurrentSearch = async () => {
+    const nom = window.prompt('Nom de cette recherche sauvegardée (visible par toute votre équipe) :');
+    if (!nom || !nom.trim()) return;
+
+    const filtres: AlertFilterOptions = {};
+    if (search) filtres.search = search;
+    if (selectedState) filtres.etat = selectedState;
+    if (selectedRegion) filtres.region = selectedRegion;
+    if (selectedProcedure) filtres.procedure = selectedProcedure;
+    if (scoreMin > 0) filtres.scoreMin = scoreMin;
+    if (onlyUnread) filtres.lu = 'false';
+    if (showExpired) filtres.expire = 'OUI';
+    if (sortBy) filtres.sortBy = sortBy;
+    if (sortOrder) filtres.sortOrder = sortOrder;
+
+    if (Object.keys(filtres).length === 0) {
+      toast.error('Aucun filtre actif', 'Appliquez au moins un filtre avant de sauvegarder une recherche.');
+      return;
+    }
+
+    try {
+      const res = await api.createSavedSearch({ nom: nom.trim(), filtres });
+      if (res.donnees) {
+        setSavedSearches((prev) => [res.donnees as SavedSearch, ...prev]);
+        toast.success('Recherche sauvegardée', nom.trim());
+      }
+    } catch (err: any) {
+      toast.error('Erreur', err.message);
+    }
+  };
+
+  const handleDeactivateSavedSearch = async (s: SavedSearch, ev: React.MouseEvent) => {
+    ev.stopPropagation();
+    try {
+      await api.toggleSavedSearch({ idRecherche: s.idRecherche, actif: 'NON' });
+      setSavedSearches((prev) => prev.filter((x) => x.idRecherche !== s.idRecherche));
+    } catch (err: any) {
+      toast.error('Erreur', err.message);
+    }
+  };
 
   const handleResetFilters = () => {
     setSearch('');
@@ -405,6 +471,32 @@ export const ClientAlerts: React.FC = () => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Recherches sauvegardées (chantier C) — raccourcis de filtres partagés par client */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleSaveCurrentSearch}
+          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold text-teal-700 dark:text-teal-300 border border-dashed border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
+        >
+          <BookmarkPlus className="w-3.5 h-3.5" />
+          <span>Sauvegarder cette recherche</span>
+        </button>
+
+        {savedSearches.map((s) => (
+          <button
+            key={s.idRecherche}
+            onClick={() => handleApplySavedSearch(s)}
+            className="group flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            title={`Créée par ${s.creeParEmail}`}
+          >
+            <span>{s.nom}</span>
+            <X
+              className="w-3 h-3 text-slate-400 group-hover:text-rose-500"
+              onClick={(ev) => handleDeactivateSavedSearch(s, ev)}
+            />
+          </button>
+        ))}
       </div>
 
       {/* Alerts List */}
