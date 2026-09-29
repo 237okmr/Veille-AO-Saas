@@ -8,6 +8,8 @@ import {
   AdminClientCacheIaItem,
   AdminClientAuditItem,
   TenderAlert,
+  AlertNote,
+  SourceFraicheur,
   AlertCounts,
   ClientDashboardStats,
   RegionStat,
@@ -198,6 +200,7 @@ export const api = {
     if (filters.statut) query.set('statut', filters.statut);
     if (filters.etat) query.set('etat', filters.etat);
     if (filters.lu !== undefined) query.set('lu', filters.lu);
+    if (filters.expire) query.set('expire', filters.expire);
     if (filters.region) query.set('region', filters.region);
     if (filters.procedure) query.set('procedure', filters.procedure);
     if (filters.scoreMin) query.set('scoreMin', String(filters.scoreMin));
@@ -218,8 +221,25 @@ export const api = {
 
   getAlertCounts: () => request<AlertCounts>('/client/alerts/count'),
 
+  getSources: () => request<{ sources: SourceFraicheur[] }>('/client/sources'),
+
   markAlert: (payload: { idMatch: string; etat: TenderAlert['etat']; note?: string }) =>
     request<TenderAlert>('/client/alerts/mark', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  setAlertDecision: (payload: { idMatch: string; decision: 'GO' | 'NOGO' | 'EN_ATTENTE'; justification?: string; lienDaoComplementaire?: string }) =>
+    request<{ idMatch: string; decision: string; decisionJustification: string; decisionLienComplementaire: string; decisionPar: string; dateDecision: string }>('/client/alerts/decision', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  getAlertNotes: (idMatch: string) =>
+    request<{ idMatch: string; total: number; notes: AlertNote[] }>(`/client/alerts/notes?idMatch=${encodeURIComponent(idMatch)}`),
+
+  addAlertNote: (payload: { idMatch: string; texte: string }) =>
+    request<{ idMatch: string; note: AlertNote }>('/client/alerts/notes', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),

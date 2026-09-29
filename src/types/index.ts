@@ -186,6 +186,30 @@ export interface TenderAlert {
   noteClient?: string;
   lienDao?: string;
   secteur?: string;
+  decision?: 'GO' | 'NOGO' | 'EN_ATTENTE';
+  decisionJustification?: string;
+  decisionLienComplementaire?: string;
+  decisionPar?: string;
+  dateDecision?: string;
+  nbNotes?: number;
+  estExpire?: boolean;
+}
+
+export interface AlertNote {
+  idNote: string;
+  idMatch: string;
+  auteurEmail: string;
+  auteurRole: string;
+  texte: string;
+  dateCreation: string;
+}
+
+export interface SourceFraicheur {
+  plateforme: string;
+  urlAccueil: string;
+  actif: boolean;
+  frequenceScraping: string;
+  derniereExecution: string;
 }
 
 export interface AlertCounts {
@@ -195,6 +219,7 @@ export interface AlertCounts {
   traites: number;
   ignores: number;
   sauvegardes: number;
+  expires: number;
 }
 
 export interface ClientDashboardStats {
@@ -351,6 +376,7 @@ export interface AlertFilterOptions {
   statut?: string;
   etat?: string;
   lu?: string;
+  expire?: 'OUI' | 'NON' | 'TOUS';
   region?: string;
   procedure?: string;
   scoreMin?: number;

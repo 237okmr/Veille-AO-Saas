@@ -17,6 +17,7 @@ import {
   Sparkles,
   Bookmark,
   CheckCircle,
+  XCircle,
   EyeOff,
   Clock,
   ExternalLink,
@@ -24,7 +25,8 @@ import {
   ChevronRight,
   SlidersHorizontal,
   RotateCcw,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Archive
 } from 'lucide-react';
 import { AlertDetailModal } from './AlertDetailModal';
 import { useToast } from '../../context/ToastContext';
@@ -36,6 +38,7 @@ export const ClientAlerts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<TenderAlert | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [showExpired, setShowExpired] = useState(false);
   const toast = useToast();
 
   // Filter states
@@ -59,6 +62,7 @@ export const ClientAlerts: React.FC = () => {
         sortBy,
         sortOrder
       };
+      filters.expire = showExpired ? 'OUI' : 'NON';
       if (search) filters.search = search;
       if (selectedState) filters.etat = selectedState;
       if (selectedRegion) filters.region = selectedRegion;
@@ -83,7 +87,7 @@ export const ClientAlerts: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, sortBy, sortOrder, search, selectedState, selectedRegion, selectedProcedure, scoreMin, onlyUnread, toast]);
+  }, [page, limit, sortBy, sortOrder, search, selectedState, selectedRegion, selectedProcedure, scoreMin, onlyUnread, showExpired, toast]);
 
   useEffect(() => {
     loadAlerts();
@@ -176,14 +180,28 @@ export const ClientAlerts: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleExportCsv}
-          disabled={exporting}
-          className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-700 bg-teal-50/60 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-2xs cursor-pointer"
-        >
-          <FileSpreadsheet className="w-4 h-4 text-teal-700 dark:text-teal-400" />
-          <span>{exporting ? 'Génération...' : 'Exporter en CSV'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowExpired((v) => !v)}
+            className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold border transition-colors ${
+              showExpired
+                ? 'bg-slate-800 text-white border-slate-800'
+                : 'text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            <Archive className="w-4 h-4" />
+            <span>{showExpired ? 'Voir les avis actifs' : 'Voir les avis expirés'}</span>
+          </button>
+
+          <button
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-teal-800 dark:text-teal-200 border border-teal-300 dark:border-teal-700 bg-teal-50/60 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-colors shadow-2xs cursor-pointer"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+            <span>{exporting ? 'Génération...' : 'Exporter en CSV'}</span>
+          </button>
+        </div>
       </div>
 
       {/* State Filter Pills / Tabs */}
@@ -450,6 +468,18 @@ export const ClientAlerts: React.FC = () => {
 
                 {/* Score badge */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {alert.decision === 'GO' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <CheckCircle className="w-3 h-3" />
+                      GO
+                    </span>
+                  )}
+                  {alert.decision === 'NOGO' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                      <XCircle className="w-3 h-3" />
+                      NO-GO
+                    </span>
+                  )}
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-teal-50 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                       <Sparkles className="w-3.5 h-3.5 text-teal-600" />

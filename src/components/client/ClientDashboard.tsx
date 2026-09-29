@@ -6,7 +6,8 @@ import {
   ProcedureStat,
   TimelineStat,
   TopMO,
-  TenderAlert
+  TenderAlert,
+  SourceFraicheur
 } from '../../types';
 import {
   Bell,
@@ -21,7 +22,8 @@ import {
   Building,
   ChevronRight,
   Download,
-  AlertCircle
+  AlertCircle,
+  Rss
 } from 'lucide-react';
 import { AlertDetailModal } from './AlertDetailModal';
 
@@ -36,6 +38,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
   const [timeline, setTimeline] = useState<TimelineStat[]>([]);
   const [topMOs, setTopMOs] = useState<TopMO[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<TenderAlert[]>([]);
+  const [sources, setSources] = useState<SourceFraicheur[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAlert, setSelectedAlert] = useState<TenderAlert | null>(null);
 
@@ -45,6 +48,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
 
   const loadDashboardData = async () => {
     setLoading(true);
+    api.getSources().then((res) => { if (res.donnees) setSources(res.donnees.sources); }).catch(() => {});
     try {
       const [sRes, rRes, pRes, tRes, moRes, aRes] = await Promise.all([
         api.getClientDashboardStats(30),
@@ -282,6 +286,27 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Fraîcheur des sources */}
+      <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-3">
+          <Rss className="w-4 h-4 text-teal-700" />
+          <span>Fraîcheur des sources</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {sources.map((s) => (
+            <div key={s.plateforme} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${s.actif ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{s.plateforme}</span>
+              </div>
+              <span className="text-slate-400 font-mono text-[10px]">
+                {s.derniereExecution || 'Jamais'}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
