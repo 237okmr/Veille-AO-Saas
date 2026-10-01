@@ -4,7 +4,8 @@ import { Building2, MapPin, Sparkles } from 'lucide-react';
 import { AvisRadar } from '../../types/radar';
 import { useLangue } from '../../context/LangueContext';
 import { formatterDateLimite, formatterMontant } from '../../i18n/accueil';
-import { categoriePourSource, joursRestants } from '../../utils/radarUtils';
+import { categoriePourSource } from '../../utils/radarUtils';
+import { parserDateLimite, joursRestantsDouala } from '../../utils/dates';
 
 interface AnnonceCardProps {
   avis: AvisRadar | null;
@@ -59,12 +60,20 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
   const montantAffiche = formatterMontant(valeurNumerique, uniteMontant, langue);
 
   // Formatage de la date limite et délai (Africa/Douala UTC+1)
+  const parsedDate = parserDateLimite(avis.dateLimiteIso);
+  const jours = joursRestantsDouala(avis.dateLimiteIso);
   const dateFormatee = formatterDateLimite(avis.dateLimiteIso, langue);
-  const jours = joursRestants(avis.dateLimiteIso);
-  const delaiAffiche =
-    jours === 1
-      ? t('jourSingulier', { n: 1 })
-      : t('jourPluriel', { n: Math.max(0, jours) });
+
+  let dateEtDelaiTexte: string;
+  if (!parsedDate || jours === null) {
+    dateEtDelaiTexte = 'Date non communiquée';
+  } else {
+    const delaiAffiche =
+      jours === 1
+        ? t('jourSingulier', { n: 1 })
+        : t('jourPluriel', { n: Math.max(0, jours) });
+    dateEtDelaiTexte = `${dateFormatee} · ${delaiAffiche}`;
+  }
 
   return (
     <div
@@ -164,7 +173,7 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
                 {t('dateLimite')}
               </span>
               <span className="text-[10px] sm:text-[11px] font-semibold text-encre">
-                {`${dateFormatee} · ${delaiAffiche}`}
+                {dateEtDelaiTexte}
               </span>
             </div>
           </div>

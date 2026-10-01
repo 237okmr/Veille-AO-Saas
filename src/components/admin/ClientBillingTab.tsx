@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ClientProfile, ClientSubscription, ClientInvoice } from '../../types';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
+import { formaterDateDouala, joursRestantsDouala } from '../../utils/dates';
 
 interface ClientBillingTabProps {
   client: ClientProfile;
@@ -133,8 +134,8 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
   // Calculate days remaining
   const daysRemaining = useMemo(() => {
     if (!subscription.dateFin) return 0;
-    const diff = new Date(subscription.dateFin).getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    const diff = joursRestantsDouala(subscription.dateFin);
+    return diff !== null ? Math.max(0, diff) : 0;
   }, [subscription.dateFin]);
 
   // Quota percentage
@@ -235,7 +236,7 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
               {daysRemaining} jours restants
             </p>
             <p className="text-[11px] text-slate-500">
-              Jusqu'au {new Date(subscription.dateFin).toLocaleDateString('fr-FR')}
+              Jusqu'au {formaterDateDouala(subscription.dateFin)}
             </p>
           </div>
 
@@ -266,11 +267,11 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
             <span className="text-slate-500">
               Période contractuelle :{' '}
               <strong className="text-slate-800 dark:text-slate-200">
-                {new Date(subscription.dateDebut).toLocaleDateString('fr-FR')}
+                {formaterDateDouala(subscription.dateDebut)}
               </strong>{' '}
               au{' '}
               <strong className="text-slate-800 dark:text-slate-200">
-                {new Date(subscription.dateFin).toLocaleDateString('fr-FR')}
+                {formaterDateDouala(subscription.dateFin)}
               </strong>
             </span>
             <span className="font-semibold text-teal-700 dark:text-teal-400">
@@ -355,7 +356,7 @@ export const ClientBillingTab: React.FC<ClientBillingTabProps> = ({ client }) =>
                         {inv.idFacture}
                       </td>
                       <td className="py-3 px-4 text-slate-600 dark:text-slate-300">
-                        {new Date(inv.dateEmission).toLocaleDateString('fr-FR')}
+                        {formaterDateDouala(inv.dateEmission)}
                       </td>
                       <td className="py-3 px-4 text-slate-500">
                         {inv.periode || 'Mensuel'}

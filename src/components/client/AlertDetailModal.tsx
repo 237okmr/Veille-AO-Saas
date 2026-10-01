@@ -23,6 +23,7 @@ import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { formaterDateDouala, formaterDateHeureDouala } from '../../utils/dates';
 
 interface AlertDetailModalProps {
   alert: TenderAlert;
@@ -243,17 +244,11 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({ alert, onClo
   };
 
   const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return iso;
-    }
+    return formaterDateDouala(iso);
+  };
+
+  const formatDateTime = (iso: string) => {
+    return formaterDateHeureDouala(iso);
   };
 
   const decisionColor = (d: string) => {

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { AlertDetailModal } from './AlertDetailModal';
 import { useToast } from '../../context/ToastContext';
+import { formaterDateDouala } from '../../utils/dates';
 
 export const ClientAlerts: React.FC = () => {
   const [alerts, setAlerts] = useState<TenderAlert[]>([]);
@@ -220,15 +221,7 @@ export const ClientAlerts: React.FC = () => {
   };
 
   const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
-    } catch {
-      return iso;
-    }
+    return formaterDateDouala(iso);
   };
 
   const totalPages = Math.ceil(total / limit) || 1;

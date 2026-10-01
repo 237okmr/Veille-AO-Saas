@@ -19,6 +19,7 @@ import { ClientProfile, ClientEnrichedProfile } from '../../../types';
 import { TagBrowser } from '../TagBrowser';
 import { api } from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../../utils/dates';
 
 interface ClientAiTabProps {
   client: ClientProfile;
@@ -229,7 +230,7 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
               <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>
                 {profilIA.dateGeneration || profilIA.dernierCalcul
-                  ? new Date(profilIA.dateGeneration || profilIA.dernierCalcul!).toLocaleString('fr-FR')
+                  ? formaterDateHeureDouala(profilIA.dateGeneration || profilIA.dernierCalcul!)
                   : 'Non calculé'}
               </span>
             </div>

@@ -14,6 +14,7 @@ import { AdminClientAlertItem } from '../../../types';
 import { api } from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
 import { exportAlertsToCsv } from '../../../utils/exportCsv';
+import { formaterDateDouala, formaterDateHeureDouala } from '../../../utils/dates';
 
 interface ClientAlertsTabProps {
   clientId: string;
@@ -466,7 +467,7 @@ export const ClientAlertsTab: React.FC<ClientAlertsTabProps> = ({ clientId, clie
                             {al.numeroAvis || al.idAO || al.idAvis || 'N/A'}
                           </span>
                           <span className="text-[10px] text-slate-400">
-                            {al.dateMatch ? new Date(al.dateMatch).toLocaleDateString('fr-FR') : ''}
+                            {al.dateMatch ? formaterDateDouala(al.dateMatch) : ''}
                           </span>
                         </div>
                         <p className="font-bold text-slate-900 line-clamp-2">
@@ -631,7 +632,7 @@ export const ClientAlertsTab: React.FC<ClientAlertsTabProps> = ({ clientId, clie
                 <div className="flex justify-between">
                   <span className="text-slate-500">Date d'évaluation :</span>
                   <span className="font-mono text-slate-900">
-                    {selectedAlert.dateMatch ? new Date(selectedAlert.dateMatch).toLocaleString('fr-FR') : 'N/A'}
+                    {selectedAlert.dateMatch ? formaterDateHeureDouala(selectedAlert.dateMatch) : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">

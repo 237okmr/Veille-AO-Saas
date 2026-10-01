@@ -1,4 +1,5 @@
 import { AvisRadar, CategorieAvis } from '../types/radar';
+import { joursRestantsDouala } from './dates';
 
 /**
  * Détermine la catégorie (« national » ou « international ») selon la source.
@@ -51,25 +52,14 @@ export function deduireSourceCanonique(
 
 /**
  * Calcule le nombre de jours restants jusqu'à la date limite au fuseau Africa/Douala (UTC+1).
- * Arrondi au jour supérieur, jamais négatif.
+ * Délègue à joursRestantsDouala et renvoie 0 si le résultat est null ou négatif.
  */
 export function joursRestants(dateLimiteIso: string): number {
-  try {
-    const now = new Date();
-    const target = new Date(dateLimiteIso);
-
-    // Décalage temporel en millisecondes
-    const diffMs = target.getTime() - now.getTime();
-    if (isNaN(diffMs) || diffMs <= 0) {
-      return 0;
-    }
-
-    // Arrondi au jour supérieur
-    const jours = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    return Math.max(0, jours);
-  } catch {
+  const diff = joursRestantsDouala(dateLimiteIso);
+  if (diff === null || diff <= 0) {
     return 0;
   }
+  return diff;
 }
 
 /**

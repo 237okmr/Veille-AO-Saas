@@ -1,4 +1,5 @@
 import { AdminClientAlertItem } from '../types';
+import { parserDateLimite } from './dates';
 
 const HEADERS = [
   'Entreprise',
@@ -17,50 +18,68 @@ const HEADERS = [
 ];
 
 /**
- * Format a date string into JJ/MM/AAAA in Africa/Douala timezone (UTC+1)
+ * Format a date string into JJ/MM/AAAA in Africa/Douala timezone (UTC+1).
+ * If the value is unparseable, returns the original text (never an empty cell or false date).
  */
-export function formatDateDouala(isoStr?: string): string {
-  if (!isoStr) return '';
-  const d = new Date(isoStr);
-  if (isNaN(d.getTime())) return '';
-  const formatter = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: 'Africa/Douala',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-  const parts = formatter.formatToParts(d);
-  const day = parts.find((p) => p.type === 'day')?.value;
-  const month = parts.find((p) => p.type === 'month')?.value;
-  const year = parts.find((p) => p.type === 'year')?.value;
-  if (!day || !month || !year) return '';
-  return `${day}/${month}/${year}`;
+export function formatDateDouala(val?: unknown): string {
+  if (val === null || val === undefined) return '';
+  const originalStr = String(val).trim();
+  if (!originalStr) return '';
+
+  const d = parserDateLimite(val);
+  if (!d) return originalStr;
+
+  try {
+    const formatter = new Intl.DateTimeFormat('fr-FR', {
+      timeZone: 'Africa/Douala',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const parts = formatter.formatToParts(d);
+    const day = parts.find((p) => p.type === 'day')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const year = parts.find((p) => p.type === 'year')?.value;
+    if (!day || !month || !year) return originalStr;
+    return `${day}/${month}/${year}`;
+  } catch {
+    return originalStr;
+  }
 }
 
 /**
- * Format a date string into JJ/MM/AAAA HH:mm in Africa/Douala timezone (UTC+1)
+ * Format a date string into JJ/MM/AAAA HH:mm in Africa/Douala timezone (UTC+1).
+ * If the value is unparseable, returns the original text (never an empty cell or false date).
  */
-export function formatDateTimeDouala(isoStr?: string): string {
-  if (!isoStr) return '';
-  const d = new Date(isoStr);
-  if (isNaN(d.getTime())) return '';
-  const formatter = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: 'Africa/Douala',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  const parts = formatter.formatToParts(d);
-  const day = parts.find((p) => p.type === 'day')?.value;
-  const month = parts.find((p) => p.type === 'month')?.value;
-  const year = parts.find((p) => p.type === 'year')?.value;
-  const hour = parts.find((p) => p.type === 'hour')?.value;
-  const minute = parts.find((p) => p.type === 'minute')?.value;
-  if (!day || !month || !year || !hour || !minute) return '';
-  return `${day}/${month}/${year} ${hour}:${minute}`;
+export function formatDateTimeDouala(val?: unknown): string {
+  if (val === null || val === undefined) return '';
+  const originalStr = String(val).trim();
+  if (!originalStr) return '';
+
+  const d = parserDateLimite(val);
+  if (!d) return originalStr;
+
+  try {
+    const formatter = new Intl.DateTimeFormat('fr-FR', {
+      timeZone: 'Africa/Douala',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(d);
+    const day = parts.find((p) => p.type === 'day')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const year = parts.find((p) => p.type === 'year')?.value;
+    const hour = parts.find((p) => p.type === 'hour')?.value;
+    const minute = parts.find((p) => p.type === 'minute')?.value;
+    if (!day || !month || !year || !hour || !minute) return originalStr;
+    return `${day}/${month}/${year} ${hour}:${minute}`;
+  } catch {
+    return originalStr;
+  }
 }
 
 /**

@@ -12,6 +12,7 @@ import {
 import { AdminClientAuditItem } from '../../../types';
 import { api } from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../../utils/dates';
 
 interface ClientAuditTabProps {
   clientId: string;
@@ -116,7 +117,7 @@ export const ClientAuditTab: React.FC<ClientAuditTabProps> = ({ clientId, client
                   return (
                     <tr key={idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                       <td className="py-3.5 px-4 font-mono text-slate-500 whitespace-nowrap">
-                        {log.timestamp ? new Date(log.timestamp).toLocaleString('fr-FR') : 'N/A'}
+                        {log.timestamp ? formaterDateHeureDouala(log.timestamp) : 'N/A'}
                       </td>
 
                       <td className="py-3.5 px-4">

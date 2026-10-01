@@ -17,6 +17,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { formaterDateDouala } from '../../utils/dates';
 
 const toArrayHelper = (val: any): string[] => {
   if (!val) return [];
@@ -416,7 +417,7 @@ export const ClientProfile: React.FC = () => {
                 Signature IA Extraite
               </span>
               <span className="text-[11px] font-mono text-slate-400">
-                Dernier calcul : {profile.profilIA.dernierCalcul ? new Date(profile.profilIA.dernierCalcul).toLocaleDateString('fr-FR') : 'Récent'}
+                Dernier calcul : {profile.profilIA.dernierCalcul ? formaterDateDouala(profile.profilIA.dernierCalcul) : 'Récent'}
               </span>
             </div>
 

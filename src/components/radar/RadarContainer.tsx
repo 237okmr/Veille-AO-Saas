@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { AvisRadar } from '../../types/radar';
-import { genererExemplesAvisRadar, joursRestants, deduireSourceCanonique } from '../../utils/radarUtils';
+import { genererExemplesAvisRadar, deduireSourceCanonique } from '../../utils/radarUtils';
+import { parserDateLimite, estExpiree } from '../../utils/dates';
 import { RadarSvg } from './RadarSvg';
 import { AnnonceCard } from './AnnonceCard';
 import { useCycleAvis } from '../../hooks/useCycleAvis';
@@ -66,7 +67,10 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
                 scoreIa: Number(item.scoreIA) || 0
               };
             })
-            .filter((avis) => joursRestants(avis.dateLimiteIso) > 0);
+            .filter((avis) => {
+              const parsed = parserDateLimite(avis.dateLimiteIso);
+              return parsed !== null && !estExpiree(avis.dateLimiteIso);
+            });
 
           if (avisValides.length > 0) {
             setAvisList(avisValides);

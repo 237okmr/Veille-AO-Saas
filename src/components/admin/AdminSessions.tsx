@@ -13,6 +13,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../utils/dates';
 
 export const AdminSessions: React.FC = () => {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -68,18 +69,8 @@ export const AdminSessions: React.FC = () => {
 
   const formatDate = (iso?: string) => {
     if (!iso) return '-';
-    try {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return iso;
-      return d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return iso;
-    }
+    const formatted = formaterDateHeureDouala(iso);
+    return formatted === '—' ? '-' : formatted;
   };
 
   return (

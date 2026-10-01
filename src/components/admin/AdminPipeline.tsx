@@ -12,6 +12,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../utils/dates';
 
 const ACTION_DESCRIPTIONS: Record<string, string> = {
   'routine-nuit': 'Exécute la collecte nocturne des avis ARMP et le matching sémantique avec les profils clients.',
@@ -117,19 +118,8 @@ export const AdminPipeline: React.FC = () => {
 
   const formatDate = (iso?: string) => {
     if (!iso) return 'À la demande';
-    try {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return iso;
-      return d.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return iso;
-    }
+    const formatted = formaterDateHeureDouala(iso);
+    return formatted === '—' ? 'À la demande' : formatted;
   };
 
   const safeActions = Array.isArray(actions) ? actions : [];

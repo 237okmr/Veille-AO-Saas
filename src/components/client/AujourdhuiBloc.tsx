@@ -2,15 +2,14 @@ import React from 'react';
 import { TenderAlert } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge, BadgeTone } from '../ui/Badge';
-import { joursRestants } from '../../utils/radarUtils';
+import { joursRestantsDouala } from '../../utils/dates';
 import {
   Clock,
   CheckCircle2,
   Building,
   Sparkles,
   ArrowRight,
-  Calendar,
-  Layers
+  HelpCircle
 } from 'lucide-react';
 
 interface AujourdhuiBlocProps {
@@ -39,7 +38,8 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
     return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
   };
 
-  const getDelayTone = (jours: number): BadgeTone => {
+  const getDelayTone = (jours: number | null): BadgeTone => {
+    if (jours === null) return 'attente';
     if (jours <= 3) return 'erreur';
     if (jours <= 7) return 'attente';
     return 'neutre';
@@ -141,7 +141,7 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
             ) : (
               <div className="space-y-2.5">
                 {echeancesTop5.map((alert) => {
-                  const jr = joursRestants(alert.dateLimite);
+                  const jr = joursRestantsDouala(alert.dateLimite);
                   const delayTone = getDelayTone(jr);
                   return (
                     <button
@@ -157,9 +157,15 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
                           </p>
                         </div>
                         <div className="shrink-0 pt-0.5">
-                          <Badge ton={delayTone} point={jr <= 3}>
-                            J-{jr}
-                          </Badge>
+                          {jr === null ? (
+                            <Badge ton="attente">
+                              Date à vérifier
+                            </Badge>
+                          ) : (
+                            <Badge ton={delayTone} point={jr <= 3}>
+                              {jr === 0 ? "Aujourd'hui" : `J-${jr}`}
+                            </Badge>
+                          )}
                         </div>
                       </div>
 
@@ -215,7 +221,7 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
             ) : (
               <div className="space-y-2.5">
                 {aDeciderTop5.map((alert) => {
-                  const jr = joursRestants(alert.dateLimite);
+                  const jr = joursRestantsDouala(alert.dateLimite);
                   const delayTone = getDelayTone(jr);
                   return (
                     <button
@@ -235,9 +241,15 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
                             <Sparkles className="w-3 h-3 text-teal-600" />
                             {alert.scoreMatch}% IA
                           </span>
-                          <Badge ton={delayTone}>
-                            J-{jr}
-                          </Badge>
+                          {jr === null ? (
+                            <Badge ton="attente" point={false}>
+                              Date à vérifier
+                            </Badge>
+                          ) : (
+                            <Badge ton={delayTone} point={jr <= 3}>
+                              {jr === 0 ? "Aujourd'hui" : `J-${jr}`}
+                            </Badge>
+                          )}
                         </div>
                       </div>
 

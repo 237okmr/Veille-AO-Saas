@@ -14,6 +14,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { ClientInvoice, ClientProfile } from '../../types';
+import { formaterDateDouala } from '../../utils/dates';
 
 interface InvoiceDetailModalProps {
   isOpen: boolean;
@@ -83,7 +84,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 Facture #{invoice.idFacture}
               </h3>
               <p className="text-[11px] text-slate-500">
-                Émise le {new Date(invoice.dateEmission).toLocaleDateString('fr-FR')}
+                Émise le {formaterDateDouala(invoice.dateEmission)}
               </p>
             </div>
           </div>
@@ -139,7 +140,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 FACTURE N° {invoice.idFacture}
               </div>
               <div className="text-xs text-slate-500">
-                Date : {new Date(invoice.dateEmission).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                Date : {formaterDateDouala(invoice.dateEmission)}
               </div>
             </div>
           </div>

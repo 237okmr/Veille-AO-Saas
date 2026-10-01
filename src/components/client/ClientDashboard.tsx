@@ -29,7 +29,7 @@ import { KpiCard } from '../ui/KpiCard';
 import { Button } from '../ui/Button';
 import { AlertDetailModal } from './AlertDetailModal';
 import { AujourdhuiBloc } from './AujourdhuiBloc';
-import { joursRestants } from '../../utils/radarUtils';
+import { parserDateLimite, joursRestantsDouala, formaterDateDouala } from '../../utils/dates';
 
 /**
  * Constante regroupant tous les textes fixes de la page
@@ -127,26 +127,26 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
     }
   };
 
-  // (a) Échéances à surveiller : GO ou SAUVEGARDE, délai restant <= 14 jours, tri croissant par deadline
+  // (a) Échéances à surveiller : GO ou SAUVEGARDE, date valide, délai restant <= 14 jours, tri croissant par deadline
   const echeances = useMemo(() => {
     return activeAlerts
       .filter((a) => {
         const isEligible = a.decision === 'GO' || a.etat === 'SAUVEGARDE';
         if (!isEligible) return false;
-        const jr = joursRestants(a.dateLimite);
-        return jr <= 14;
+        const jr = joursRestantsDouala(a.dateLimite);
+        return jr !== null && jr <= 14;
       })
       .sort((a, b) => {
-        const jrA = joursRestants(a.dateLimite);
-        const jrB = joursRestants(b.dateLimite);
-        if (jrA !== jrB) return jrA - jrB;
-        const timeA = a.dateLimite ? new Date(a.dateLimite).getTime() : 0;
-        const timeB = b.dateLimite ? new Date(b.dateLimite).getTime() : 0;
+        const jrA = joursRestantsDouala(a.dateLimite);
+        const jrB = joursRestantsDouala(b.dateLimite);
+        if (jrA !== null && jrB !== null && jrA !== jrB) return jrA - jrB;
+        const timeA = parserDateLimite(a.dateLimite)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const timeB = parserDateLimite(b.dateLimite)?.getTime() ?? Number.MAX_SAFE_INTEGER;
         return timeA - timeB;
       });
   }, [activeAlerts]);
 
-  // (b) À décider : NOUVEAU ou non lue, décision absente ou EN_ATTENTE, tri décroissant par score
+  // (b) À décider : NOUVEAU ou non lue, décision absente ou EN_ATTENTE, tri décroissant par score (les dates illisibles conservées)
   const aDecider = useMemo(() => {
     return activeAlerts
       .filter((a) => {
@@ -168,40 +168,29 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
     return new Intl.NumberFormat('fr-FR').format(val) + ' FCFA';
   };
 
-  const formatDateDouala = (iso: string) => {
-    try {
-      const d = new Date(iso);
-      if (isNaN(d.getTime())) return iso;
-      return new Intl.DateTimeFormat('fr-FR', {
-        timeZone: 'Africa/Douala',
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      }).format(d);
-    } catch {
-      return iso;
-    }
-  };
-
   // Calcul honnête et dynamique de la prochaine échéance
   const prochainDelai = useMemo(() => {
-    if (!stats?.prochaineEcheance) {
+    const d = parserDateLimite(stats?.prochaineEcheance);
+    if (!d || !stats?.prochaineEcheance) {
       return {
         valeur: TEXTES.kpiAucuneEcheance,
         sousTexte: undefined,
         ton: 'neutre' as const
       };
     }
-    const jr = joursRestants(stats.prochaineEcheance);
-    const dateStr = formatDateDouala(stats.prochaineEcheance);
-    let sousTexte = TEXTES.kpiDansNJours(jr);
-    if (jr === 0) sousTexte = TEXTES.kpiAujourdhui;
-    else if (jr === 1) sousTexte = TEXTES.kpiDansUnJour;
+    const jr = joursRestantsDouala(stats.prochaineEcheance);
+    const dateStr = formaterDateDouala(stats.prochaineEcheance);
+    let sousTexte: string | undefined = undefined;
+    if (jr !== null) {
+      if (jr === 0) sousTexte = TEXTES.kpiAujourdhui;
+      else if (jr === 1) sousTexte = TEXTES.kpiDansUnJour;
+      else if (jr > 1) sousTexte = TEXTES.kpiDansNJours(jr);
+    }
 
     return {
       valeur: dateStr,
       sousTexte,
-      ton: (jr <= 3 ? 'attention' : 'neutre') as 'attention' | 'neutre'
+      ton: (jr !== null && jr <= 3 ? 'attention' : 'neutre') as 'attention' | 'neutre'
     };
   }, [stats?.prochaineEcheance]);
 
@@ -298,44 +287,79 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
 
       {/* 4. Fraîcheur des sources */}
       <section className="p-4 sm:p-5 rounded-carte border border-slate-200 bg-white shadow-2xs space-y-3" aria-label="Sources et synchronisation">
-        <div className="flex items-center gap-2 text-[0.875rem] font-bold text-slate-900">
-          <Rss className="w-4 h-4 text-teal" />
-          <span>{TEXTES.sourcesTitre}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Rss className="w-4 h-4 text-teal shrink-0" />
+            <h3 className="font-titre font-bold text-[0.9375rem] text-slate-900">
+              {TEXTES.sourcesTitre}
+            </h3>
+          </div>
+          <span className="text-[0.8125rem] text-slate-500 font-medium">
+            {TEXTES.headerVeilleActive}
+          </span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {sources.map((s) => (
-            <div key={s.plateforme} className="flex items-center justify-between p-3 rounded-champ bg-slate-50 text-[0.8125rem]">
-              <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.actif ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                <span className="font-semibold text-slate-800">{s.plateforme}</span>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+          {sources.length === 0 ? (
+            ['ARMP', 'COLEPS', 'MINMAP', 'DGTCFM', 'FEICOM', 'BAILLEURS'].map((s) => (
+              <div key={s} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
+                <p className="font-bold text-[0.8125rem] text-slate-700">{s}</p>
+                <p className="text-[0.8125rem] text-slate-500">Collecte active</p>
               </div>
-              <span className="text-slate-500 font-mono text-[0.8125rem]">
-                {s.derniereExecution || TEXTES.sourcesJamais}
-              </span>
-            </div>
-          ))}
+            ))
+          ) : (
+            sources.map((s) => (
+              <div key={s.plateforme} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[0.8125rem] text-slate-800">{s.plateforme}</span>
+                  <span className={`w-2 h-2 rounded-full ${s.actif ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                </div>
+                <p className="text-[0.8125rem] text-slate-500 truncate">
+                  {s.derniereExecution ? formaterDateDouala(s.derniereExecution) : TEXTES.sourcesJamais}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
-      {/* 5. Analyses regroupées dans un volet details/summary */}
+      {/* 5. Section repliable « Analyses détaillées » (details/summary accessible) */}
       <details
         open={isDesktop}
-        className="group border border-slate-200 rounded-carte bg-white overflow-hidden shadow-xs"
+        className="group border border-slate-200 rounded-carte bg-white shadow-2xs overflow-hidden"
       >
-        <summary className="flex items-center justify-between p-4 sm:px-6 min-h-[44px] cursor-pointer font-titre font-bold text-[1.125rem] text-slate-900 select-none hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+        <summary
+          tabIndex={0}
+          className="w-full flex items-center justify-between p-4 sm:p-5 min-h-[44px] cursor-pointer bg-slate-50/70 hover:bg-slate-100/80 transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 list-none"
+        >
           <div className="flex items-center gap-2.5">
-            <BarChart3 className="w-5 h-5 text-teal" />
-            <span>{TEXTES.analysesTitre}</span>
+            <BarChart3 className="w-5 h-5 text-teal shrink-0" />
+            <div>
+              <h2 className="font-titre font-bold text-[1rem] text-slate-900 leading-tight">
+                {TEXTES.analysesTitre}
+              </h2>
+              <p className="text-[0.8125rem] text-slate-600">
+                {TEXTES.analysesSousTitre}
+              </p>
+            </div>
           </div>
-          <ChevronDown className="w-5 h-5 text-slate-500 transition-transform duration-200 group-open:rotate-180" />
+          <div className="flex items-center gap-2">
+            <span className="text-[0.8125rem] font-semibold text-teal group-open:hidden">
+              Afficher
+            </span>
+            <span className="text-[0.8125rem] font-semibold text-teal hidden group-open:inline">
+              Masquer
+            </span>
+            <ChevronDown className="w-5 h-5 text-slate-500 transition-transform duration-200 group-open:rotate-180" />
+          </div>
         </summary>
 
-        <div className="p-4 sm:p-6 pt-2 space-y-6 border-t border-slate-100">
-          {/* Main Charts & Visualizations */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Region Distribution Chart */}
-            <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
-              <div className="space-y-0.5">
+        <div className="p-4 sm:p-6 space-y-6 border-t border-slate-200">
+          {/* Charts Grid: Regional and Procedure Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Regional Breakdown Card */}
+            <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+              <div>
                 <h3 className="text-[0.9375rem] font-bold text-slate-900">
                   {TEXTES.regionTitre}
                 </h3>
@@ -345,39 +369,31 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
               </div>
 
               <div className="space-y-3 pt-2">
-                {safeRegionStats.map((item) => {
-                  const pct = (item.count / maxRegionCount) * 100;
-                  return (
-                    <div key={item.region} className="space-y-1">
-                      <div className="flex items-center justify-between text-[0.8125rem]">
-                        <div className="flex items-center gap-2 font-medium text-slate-800">
-                          <MapPin className="w-4 h-4 text-teal" />
-                          <span>{item.region}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[0.8125rem] text-slate-600 font-mono">
-                            {formatFcfa(item.montantTotal)}
-                          </span>
-                          <span className="font-mono font-bold text-slate-900 tabular-nums w-14 text-right">
-                            {TEXTES.regionAvisCount(item.count)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                        <div
-                          className="bg-teal h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(pct, item.count > 0 ? 8 : 0)}%` }}
-                        />
-                      </div>
+                {safeRegionStats.slice(0, 5).map((reg) => (
+                  <div key={reg.region} className="space-y-1">
+                    <div className="flex justify-between text-[0.8125rem] font-semibold">
+                      <span className="text-slate-700 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        {reg.region}
+                      </span>
+                      <span className="text-slate-900">
+                        {TEXTES.regionAvisCount(reg.count)} ({formatFcfa(reg.montantTotal)})
+                      </span>
                     </div>
-                  );
-                })}
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-teal h-full rounded-full transition-all duration-500"
+                        style={{ width: `${(reg.count / maxRegionCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right: Breakdown by Procedure */}
+            {/* Procedure Breakdown Card */}
             <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
-              <div className="space-y-0.5">
+              <div>
                 <h3 className="text-[0.9375rem] font-bold text-slate-900">
                   {TEXTES.procedureTitre}
                 </h3>
@@ -388,15 +404,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
 
               <div className="space-y-3 pt-2">
                 {procedureStats.map((proc) => (
-                  <div key={proc.procedure} className="p-3 rounded-xl bg-slate-50 space-y-1.5">
-                    <div className="flex items-center justify-between text-[0.8125rem]">
-                      <span className="font-bold text-slate-800">{proc.procedure}</span>
-                      <span className="font-mono text-[0.8125rem] font-semibold text-teal">
+                  <div key={proc.procedure} className="space-y-1">
+                    <div className="flex justify-between text-[0.8125rem] font-semibold">
+                      <span className="text-slate-700">{proc.procedure}</span>
+                      <span className="text-slate-900">
                         {TEXTES.procedureCount(proc.count, proc.percentage)}
                       </span>
                     </div>
-                    <p className="text-[0.8125rem] text-slate-600 truncate">{proc.label}</p>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div className="bg-amber-500 h-full rounded-full" style={{ width: `${proc.percentage}%` }} />
                     </div>
                   </div>
@@ -465,7 +480,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
                           {formatFcfa(alert.montantEstime)}
                         </span>
                         <span className="text-amber-700 font-medium">
-                          Limite : {formatDateDouala(alert.dateLimite)}
+                          Limite : {formaterDateDouala(alert.dateLimite)}
                         </span>
                       </div>
                     </div>
@@ -485,23 +500,21 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
                 </p>
               </div>
 
-              <div className="space-y-3 pt-1">
+              <div className="space-y-3 pt-2">
                 {topMOs.map((mo, idx) => (
-                  <div key={mo.nom} className="flex items-start justify-between gap-2 p-3 rounded-xl bg-slate-50">
-                    <div className="flex items-start gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-[0.8125rem] font-bold flex items-center justify-center shrink-0">
-                        0{idx + 1}
-                      </span>
-                      <div>
-                        <p className="text-[0.875rem] font-semibold text-slate-900 leading-tight">
-                          {mo.nom}
-                        </p>
-                        <p className="text-[0.8125rem] text-slate-600 font-mono mt-0.5">
-                          {formatFcfa(mo.montantCumule)}
-                        </p>
+                  <div
+                    key={mo.nom}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
+                    <div className="flex items-center gap-3 truncate">
+                      <div className="w-6 h-6 rounded-lg bg-teal-50 text-teal font-mono font-bold text-[0.8125rem] flex items-center justify-center shrink-0">
+                        {idx + 1}
                       </div>
+                      <span className="text-[0.8125rem] font-semibold text-slate-800 truncate">
+                        {mo.nom}
+                      </span>
                     </div>
-                    <span className="text-[0.8125rem] font-mono font-bold text-teal shrink-0">
+                    <span className="text-[0.8125rem] font-mono font-bold text-slate-600 shrink-0 ml-2">
                       {TEXTES.topMoAvisCount(mo.avisCount)}
                     </span>
                   </div>
@@ -512,15 +525,19 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
         </div>
       </details>
 
-      {/* Tender Modal */}
+      {/* 6. Modale de détail d'alerte */}
       {selectedAlert && (
         <AlertDetailModal
           alert={selectedAlert}
           onClose={() => setSelectedAlert(null)}
-          onUpdate={(updated) => {
-            setSelectedAlert(updated);
-            setRecentAlerts((prev) => prev.map((a) => (a.idMatch === updated.idMatch ? updated : a)));
-            setActiveAlerts((prev) => prev.map((a) => (a.idMatch === updated.idMatch ? updated : a)));
+          onUpdate={(updatedAlert) => {
+            setActiveAlerts((prev) =>
+              prev.map((a) => (a.idMatch === updatedAlert.idMatch ? updatedAlert : a))
+            );
+            setRecentAlerts((prev) =>
+              prev.map((a) => (a.idMatch === updatedAlert.idMatch ? updatedAlert : a))
+            );
+            setSelectedAlert(updatedAlert);
           }}
         />
       )}

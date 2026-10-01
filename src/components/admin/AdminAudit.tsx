@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../utils/dates';
 
 export const AdminAudit: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
@@ -56,18 +57,7 @@ export const AdminAudit: React.FC = () => {
   };
 
   const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-    } catch {
-      return iso;
-    }
+    return formaterDateHeureDouala(iso);
   };
 
   return (

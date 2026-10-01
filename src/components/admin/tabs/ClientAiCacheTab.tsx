@@ -14,6 +14,7 @@ import {
 import { AdminClientCacheIaItem } from '../../../types';
 import { api } from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
+import { formaterDateHeureDouala } from '../../../utils/dates';
 
 interface ClientAiCacheTabProps {
   clientId: string;
@@ -146,7 +147,7 @@ export const ClientAiCacheTab: React.FC<ClientAiCacheTabProps> = ({ clientId, cl
                     </td>
 
                     <td className="py-3.5 px-4 text-right text-slate-400 font-mono whitespace-nowrap">
-                      {item.dateEval ? new Date(item.dateEval).toLocaleString('fr-FR') : 'N/A'}
+                      {item.dateEval ? formaterDateHeureDouala(item.dateEval) : 'N/A'}
                     </td>
                   </tr>
                 ))}

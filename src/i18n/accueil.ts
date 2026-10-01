@@ -7,6 +7,8 @@
  * - Dates limites : fuseau obligatoire 'Africa/Douala' (UTC+1). Ex. "9 oct. 2026".
  */
 
+import { formaterDateDouala } from '../utils/dates';
+
 export type Langue = 'fr' | 'en';
 
 export const dictionnaireAccueil = {
@@ -204,15 +206,10 @@ export function formatterMontant(montant: number, unite: 'M' | 'Md', langue: Lan
 }
 
 /**
- * Formate une date au fuseau Africa/Douala.
+ * Formate une date au fuseau Africa/Douala sans jamais lancer d'exception.
+ * Délègue à formaterDateDouala.
  * Exemple : "9 oct. 2026"
  */
-export function formatterDateLimite(date: Date | string, langue: Langue = 'fr'): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat(langue === 'fr' ? 'fr-FR' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'Africa/Douala'
-  }).format(d);
+export function formatterDateLimite(date: unknown, langue: Langue = 'fr'): string {
+  return formaterDateDouala(date, langue);
 }
