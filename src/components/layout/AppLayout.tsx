@@ -10,6 +10,7 @@ import { ClientDeadlines } from '../client/ClientDeadlines';
 import { ClientAccount } from '../client/ClientAccount';
 import { AdminDashboard } from '../admin/AdminDashboard';
 import { AdminClients } from '../admin/AdminClients';
+import { AdminAvis } from '../admin/AdminAvis';
 import { AdminAlertes } from '../admin/AdminAlertes';
 import { AdminUsers } from '../admin/AdminUsers';
 import { AdminPipeline } from '../admin/AdminPipeline';
@@ -109,6 +110,8 @@ export const AppLayout: React.FC = () => {
         return <AdminDashboard onNavigate={handleNavigate} />;
       case 'admin-clients':
         return <AdminClients />;
+      case 'admin-avis':
+        return <AdminAvis onNavigate={handleNavigate} />;
       case 'admin-alertes':
         return <AdminAlertes onNavigate={handleNavigate} />;
       case 'admin-users':

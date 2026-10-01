@@ -59,6 +59,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Supervision globale SaaS';
       case 'admin-clients':
         return 'Gestion des entreprises clientes';
+      case 'admin-avis':
+        return 'Avis collectés';
       case 'admin-alertes':
         return 'Alertes clients';
       case 'admin-users':

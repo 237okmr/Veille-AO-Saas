@@ -25,7 +25,12 @@ import {
   ApiConfigInfo,
   ReglagesData,
   ReglagesParametres,
-  PublicRadarData
+  PublicRadarData,
+  AvisCollecte,
+  FacetteAvis,
+  AdminAvisFacettes,
+  AdminAvisParams,
+  AdminAvisResponse
 } from '../types';
 
 const TOKEN_KEY = 'cam_marches_token';
@@ -541,6 +546,30 @@ export const api = {
       body: JSON.stringify({ code })
     }),
 
+  /**
+   * Consultation des avis collectés (base réelle TOUS_AO).
+   * Construit la requête en n'envoyant QUE les paramètres renseignés (ni chaîne vide, ni 'TOUS').
+   */
+  getAdminAvis: (params: AdminAvisParams = {}) => {
+    const q = new URLSearchParams();
+    if (params.limit !== undefined && params.limit !== null) q.set('limit', String(params.limit));
+    if (params.offset !== undefined && params.offset !== null) q.set('offset', String(params.offset));
+    if (params.source && params.source.trim() !== '' && params.source !== 'TOUS') {
+      q.set('source', params.source.trim());
+    }
+    if (params.statut && params.statut.trim() !== '' && params.statut !== 'TOUS') {
+      q.set('statut', params.statut.trim());
+    }
+    if (params.dateFrom && params.dateFrom.trim() !== '') q.set('dateFrom', params.dateFrom.trim());
+    if (params.dateTo && params.dateTo.trim() !== '') q.set('dateTo', params.dateTo.trim());
+    if (params.q && params.q.trim() !== '') q.set('q', params.q.trim());
+    if (params.sortBy && params.sortBy.trim() !== '') q.set('sortBy', params.sortBy.trim());
+    if (params.sortOrder && params.sortOrder.trim() !== '') q.set('sortOrder', params.sortOrder.trim());
+
+    const qs = q.toString();
+    return request<AdminAvisResponse>(`/admin/avis${qs ? `?${qs}` : ''}`);
+  },
+
   // Diagnostic endpoints
   getDiagnosticStatus: () =>
     request<{
@@ -586,3 +615,5 @@ export const api = {
     }
   }
 };
+
+export const getAdminAvis = (params: AdminAvisParams = {}) => api.getAdminAvis(params);

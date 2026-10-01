@@ -778,6 +778,11 @@ app.get('/api/config', (_req: Request, res: Response) => {
 
 // ============================================================================
 // PUBLIC RADAR TICKER CACHE & ROUTE
+// - Cas nominal : transmission à Google Apps Script (/public/radar-ticker).
+//   Si l'Apps Script répond avec succès et des données réelles, mise en cache mémoire (TTL 5 min).
+// - Cas de repli (API non configurée, route absente ou échec réseau) :
+//   Renvoie une réponse explicite (simulation: true, blips: [], métadonnées nulles) sans fabriquer
+//   aucun faux avis ni faux chiffre. La réponse de repli n'est JAMAIS mise en cache.
 // ============================================================================
 interface PublicRadarCache {
   data: any;
@@ -805,170 +810,22 @@ app.get('/api/public/radar-ticker', async (_req: Request, res: Response) => {
         return res.json(apiResponse);
       }
     } catch (e) {
-      console.warn('[Radar Public Endpoint] Forwarding failed, using fallback simulation engine:', e);
+      console.warn('[Radar Public Endpoint] Forwarding failed, using fallback empty response:', e);
     }
   }
-
-  const now = new Date();
-  const mockRadarData = {
-    derniereSynchro: new Date(now.getTime() - 12 * 60 * 1000).toISOString(),
-    statutSynchro: 'ACTIF',
-    totalAvisAnalysesPeriode: 87,
-    sourcesOverview: {
-      nationalCount: 52,
-      internationalCount: 35,
-      sourcesList: [
-        'ARMP Cameroun',
-        'COLEPS (État & Mairies)',
-        'FEICOM',
-        'DevelopmentAid (850+ sources)',
-        'Banque Mondiale',
-        'BAD (Banque Africaine de Développement)',
-        'Agences ONU (PNUD, UNICEF, FAO)'
-      ]
-    },
-    blips: [
-      {
-        idAO: 'AO-2026-BONDJOCK-012',
-        titreAO: "Travaux d'extension du réseau d'eau potable et construction de 3 forages équipés à la Commune de Bondjock",
-        maitreOuvrage: 'Commune de Bondjock (Région du Centre)',
-        region: 'Centre',
-        montantEstime: 48000000,
-        dateLimite: '2026-10-24T12:00:00Z',
-        typeProcedure: 'AONO',
-        scoreIA: 4.8,
-        motifScore: "Hydraulique villageoise & BTP : Fort besoin local en adduction d'eau.",
-        sourceType: 'NATIONAL',
-        sourceNom: 'ARMP Cameroun / Mairie',
-        angle: 35,
-        radiusPercent: 42,
-        datePublication: new Date(now.getTime() - 3 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-KADEY-005',
-        titreAO: "Fourniture de kits scolaires et matériel informatique pour les écoles publiques du Département de la Kadey",
-        maitreOuvrage: 'Préfecture de la Kadey (Batouri)',
-        region: 'Est',
-        montantEstime: 10000000,
-        dateLimite: '2026-10-18T10:00:00Z',
-        typeProcedure: 'DC',
-        scoreIA: 4.2,
-        motifScore: "Demande de cotation : Fournitures scolaires et équipements informatiques de proximité.",
-        sourceType: 'NATIONAL',
-        sourceNom: 'ARMP / Préfecture',
-        angle: 110,
-        radiusPercent: 28,
-        datePublication: new Date(now.getTime() - 5 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-MINTP-088',
-        titreAO: "Travaux de bitumage en enduit superficiel et aménagement des voies d'accès au pôle agro-industriel de Bafoussam",
-        maitreOuvrage: 'MINTP (Ministère des Travaux Publics)',
-        region: 'Ouest',
-        montantEstime: 385000000,
-        dateLimite: '2026-10-28T12:00:00Z',
-        typeProcedure: 'AON',
-        scoreIA: 4.9,
-        motifScore: "Voirie & Bitumage : Haute valeur ajoutée et maître d'ouvrage stratégique MINTP.",
-        sourceType: 'NATIONAL',
-        sourceNom: 'ARMP Cameroun',
-        angle: 215,
-        radiusPercent: 78,
-        datePublication: new Date(now.getTime() - 1 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-BAD-014',
-        titreAO: "Installation d'équipements solaires photovoltaïques et micro-réseaux pour 42 centres de santé ruraux (PAJER-U / BAD)",
-        maitreOuvrage: 'BAD / MINEE Cameroun',
-        region: 'Extrême-Nord & Nord',
-        montantEstime: 1250000000,
-        dateLimite: '2026-11-15T15:00:00Z',
-        typeProcedure: 'AOI',
-        scoreIA: 4.9,
-        motifScore: "Financement BAD : Énergie renouvelable et électrification rurale en zone septentrionale.",
-        sourceType: 'INTERNATIONAL_BAILLEURS',
-        sourceNom: 'DevelopmentAid (BAD)',
-        angle: 290,
-        radiusPercent: 82,
-        datePublication: new Date(now.getTime() - 4 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-CUD-142',
-        titreAO: "Construction de 4 collecteurs d'assainissement et drainage pluvial dans les bassins Makèpè-Missokè à Douala",
-        maitreOuvrage: 'Communauté Urbaine de Douala (CUD)',
-        region: 'Littoral',
-        montantEstime: 620000000,
-        dateLimite: '2026-11-05T14:00:00Z',
-        typeProcedure: 'AOO',
-        scoreIA: 4.7,
-        motifScore: "Génie civil hydraulique lourd : Drainage pluvial urbain à Douala.",
-        sourceType: 'NATIONAL',
-        sourceNom: 'COLEPS / CUD',
-        angle: 165,
-        radiusPercent: 65,
-        datePublication: new Date(now.getTime() - 7 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-BM-052',
-        titreAO: "Acquisition de 120 ordinateurs serveurs et licences de sécurité pour le système d'information de santé (BM PASS-Santé)",
-        maitreOuvrage: 'Banque Mondiale / MINSANTE',
-        region: 'Centre (Yaoundé)',
-        montantEstime: 410000000,
-        dateLimite: '2026-11-02T11:00:00Z',
-        typeProcedure: 'AOI',
-        scoreIA: 4.6,
-        motifScore: "World Bank : Modernisation des infrastructures informatiques et serveurs.",
-        sourceType: 'INTERNATIONAL_BAILLEURS',
-        sourceNom: 'Banque Mondiale (DevelopmentAid)',
-        angle: 330,
-        radiusPercent: 58,
-        datePublication: new Date(now.getTime() - 9 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-PNUD-019',
-        titreAO: "Assistance technique pour la cartographie SIG et numérisation des cadastres communaux dans la Région de l'Est",
-        maitreOuvrage: 'PNUD Cameroun (ONU)',
-        region: 'Est',
-        montantEstime: 180000000,
-        dateLimite: '2026-10-22T16:00:00Z',
-        typeProcedure: 'ASMI',
-        scoreIA: 4.8,
-        motifScore: "Agence ONU (PNUD) : Systèmes d'information géographique (SIG) et gouvernance locale.",
-        sourceType: 'INTERNATIONAL_BAILLEURS',
-        sourceNom: 'Agences ONU (PNUD)',
-        angle: 75,
-        radiusPercent: 50,
-        datePublication: new Date(now.getTime() - 11 * 3600 * 1000).toISOString()
-      },
-      {
-        idAO: 'AO-2026-FEICOM-031',
-        titreAO: "Construction de l'Hôtel de Ville de la Commune d'Ebolowa II et aménagements paysagers - Région du Sud",
-        maitreOuvrage: 'FEICOM / Commune Ebolowa II',
-        region: 'Sud',
-        montantEstime: 145000000,
-        dateLimite: '2026-10-15T11:00:00Z',
-        typeProcedure: 'AON',
-        scoreIA: 4.5,
-        motifScore: "Décentralisation FEICOM : Bâtiment institutionnel municipal.",
-        sourceType: 'NATIONAL',
-        sourceNom: 'FEICOM / ARMP',
-        angle: 250,
-        radiusPercent: 38,
-        datePublication: new Date(now.getTime() - 14 * 3600 * 1000).toISOString()
-      }
-    ]
-  };
-
-  publicRadarMemoryCache = {
-    data: mockRadarData,
-    timestamp: Date.now()
-  };
 
   return res.json({
     succes: true,
     code: 200,
-    message: "Données Radar Ticker générées et mises en cache",
-    donnees: mockRadarData,
+    message: "Aucun avis public disponible : données d'exemple côté interface.",
+    donnees: {
+      simulation: true,
+      blips: [],
+      derniereSynchro: null,
+      statutSynchro: null,
+      totalAvisAnalysesPeriode: null,
+      sourcesOverview: null
+    },
     timestamp: new Date().toISOString()
   });
 });

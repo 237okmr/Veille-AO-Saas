@@ -13,6 +13,7 @@ import {
   Settings,
   CalendarClock,
   Zap,
+  Inbox,
   X
 } from 'lucide-react';
 import { LogoMarketAdvisor } from '../brand/LogoMarketAdvisor';
@@ -48,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const adminNav = [
     { id: 'admin-dashboard', label: 'Supervision globale', icon: LayoutDashboard },
     { id: 'admin-clients', label: 'Entreprises clientes', icon: Building2 },
+    { id: 'admin-avis', label: 'Avis collectés', icon: Inbox },
     { id: 'admin-alertes', label: 'Alertes clients', icon: Bell },
     { id: 'admin-users', label: 'Comptes utilisateurs', icon: Users },
     { id: 'admin-pipeline', label: 'Pipeline de collecte', icon: Zap },

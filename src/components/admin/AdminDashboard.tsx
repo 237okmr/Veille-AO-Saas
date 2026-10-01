@@ -127,8 +127,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           <span className="text-[11px] text-slate-500">Comptes enregistrés</span>
         </button>
 
-        {/* Avis Collectés (Non cliquable) */}
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+        {/* Avis Collectés (Cliquable vers admin-avis) */}
+        <button
+          type="button"
+          onClick={() => onNavigate('admin-avis')}
+          className="w-full text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-teal-500/60 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-teal-600 transition-all cursor-pointer shadow-xs"
+        >
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Avis Scrapés</span>
             <FileText className="w-4 h-4 text-teal-600" />
@@ -137,7 +141,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             {stats?.avis?.total ?? stats?.totalAvisScrapes ?? 0}
           </p>
           <span className="text-[11px] text-slate-500">Toutes sources confondues</span>
-        </div>
+        </button>
 
         {/* Alertes Ciblées (Cliquable vers admin-alertes) */}
         <button

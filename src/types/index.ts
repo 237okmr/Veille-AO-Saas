@@ -16,15 +16,16 @@ export interface RadarBlipItem {
 }
 
 export interface PublicRadarData {
-  derniereSynchro: string;
-  statutSynchro: 'ACTIF' | 'SYNCHRONISE';
-  totalAvisAnalysesPeriode: number;
-  sourcesOverview: {
-    nationalCount: number;
-    internationalCount: number;
-    sourcesList: string[];
-  };
-  blips: RadarBlipItem[];
+  simulation?: boolean | null;
+  derniereSynchro?: string | null;
+  statutSynchro?: 'ACTIF' | 'SYNCHRONISE' | string | null;
+  totalAvisAnalysesPeriode?: number | null;
+  sourcesOverview?: {
+    nationalCount?: number | null;
+    internationalCount?: number | null;
+    sourcesList?: string[];
+  } | null;
+  blips?: RadarBlipItem[];
 }
 
 export type UserRole = 'ADMIN' | 'CLIENT';
@@ -348,6 +349,74 @@ export interface SessionItem {
   ip?: string;
   userAgent?: string;
   actif: ActiveStatus;
+}
+
+// ============================================================================
+// CONTRAT DE LA ROUTE GET /admin/avis (Onglet TOUS_AO - Base réelle Google Sheets)
+// ============================================================================
+// - Méthode et chemin : GET /admin/avis
+// - Paramètres de requête (tous facultatifs) :
+//   - limit : nombre (défaut 25, maximum 100)
+//   - offset : nombre (défaut 0)
+//   - source : string (nom exact de la source ; vide ou « TOUS » = toutes)
+//   - statut : string (NOUVEAU, QUALIFIÉ, REJETÉ, EXPIRÉ ou ARCHIVÉ ; vide ou « TOUS » = tous)
+//   - dateFrom : string (AAAA-MM-JJ, borne incluse, appliquée à la date de collecte au fuseau Africa/Douala)
+//   - dateTo : string (AAAA-MM-JJ, borne incluse, appliquée à la date de collecte au fuseau Africa/Douala)
+//   - q : string (recherche insensible à la casse et aux accents dans titre, autorite, numeroAvis, region, source)
+//   - sortBy : 'dateCollecte' | 'dateLimite' | 'montant' (défaut 'dateCollecte')
+//   - sortOrder : 'desc' | 'asc' (défaut 'desc')
+// - Format de réponse standard : ApiResponse<AdminAvisResponse>
+//   avec donnees = { total, limit, offset, count, avis, facettes }
+//   où facettes = { sources: [{ valeur, nombre }], statuts: [{ valeur, nombre }] }
+//   calculées globalement sur l'ensemble des avis, indépendamment des filtres actifs.
+// ============================================================================
+
+export interface AvisCollecte {
+  idAvis: string;
+  numeroAvis: string | null;
+  titre: string;
+  autorite: string | null;
+  region: string | null;
+  source: string;
+  sourceType: 'NATIONAL' | 'INTERNATIONAL' | null;
+  procedure: string | null;
+  montant: number | null;
+  dateLimite: string | null;
+  datePublication: string | null;
+  dateCollecte: string | null;
+  statut: string;
+  lien: string | null;
+}
+
+export interface FacetteAvis {
+  valeur: string;
+  nombre: number;
+}
+
+export interface AdminAvisFacettes {
+  sources: FacetteAvis[];
+  statuts: FacetteAvis[];
+}
+
+export interface AdminAvisParams {
+  limit?: number;
+  offset?: number;
+  source?: string;
+  statut?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  q?: string;
+  sortBy?: 'dateCollecte' | 'dateLimite' | 'montant' | string;
+  sortOrder?: 'desc' | 'asc';
+}
+
+export interface AdminAvisResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  count: number;
+  avis: AvisCollecte[];
+  facettes: AdminAvisFacettes;
 }
 
 export interface ApiResponse<T = any> {
