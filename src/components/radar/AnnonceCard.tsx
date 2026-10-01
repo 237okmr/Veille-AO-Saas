@@ -51,13 +51,17 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
       ? `${avis.scoreIa.toFixed(1).replace('.', ',')}/5`
       : `${avis.scoreIa.toFixed(1)}/5`;
 
-  // Formatage du montant
-  const uniteMontant = avis.montantFcfa >= 1_000_000_000 ? 'Md' : 'M';
-  const valeurNumerique =
-    avis.montantFcfa >= 1_000_000_000
-      ? Number((avis.montantFcfa / 1_000_000_000).toFixed(1))
-      : Math.round(avis.montantFcfa / 1_000_000);
-  const montantAffiche = formatterMontant(valeurNumerique, uniteMontant, langue);
+  // Formatage du montant si renseigné
+  const hasMontantNumerique = avis.montantFcfa !== null && avis.montantFcfa > 0;
+  let montantAffiche = '';
+  if (hasMontantNumerique && avis.montantFcfa !== null) {
+    const uniteMontant = avis.montantFcfa >= 1_000_000_000 ? 'Md' : 'M';
+    const valeurNumerique =
+      avis.montantFcfa >= 1_000_000_000
+        ? Number((avis.montantFcfa / 1_000_000_000).toFixed(1))
+        : Math.round(avis.montantFcfa / 1_000_000);
+    montantAffiche = formatterMontant(valeurNumerique, uniteMontant, langue);
+  }
 
   // Formatage de la date limite et délai (Africa/Douala UTC+1)
   const parsedDate = parserDateLimite(avis.dateLimiteIso);
@@ -157,15 +161,21 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
           {/* 4. PIED DE CARTE : Montant (gauche) & Date Limite (droite)        */}
           {/* ================================================================ */}
           <div className="border-t border-ligne/80 pt-2.5 flex items-baseline justify-between gap-2">
-            {/* Montant estimé en gros (rebond désactivé si mouvement réduit) */}
-            <motion.div
-              initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.96 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
-              className="font-titre font-extrabold text-sm sm:text-base text-encre tabular-nums tracking-tight leading-none"
-            >
-              {montantAffiche}
-            </motion.div>
+            {/* Montant estimé ou mention sans montant */}
+            {hasMontantNumerique ? (
+              <motion.div
+                initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.96 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
+                className="font-titre font-extrabold text-sm sm:text-base text-encre tabular-nums tracking-tight leading-none"
+              >
+                {montantAffiche}
+              </motion.div>
+            ) : (
+              <div className="text-[1rem] font-semibold text-discret leading-tight truncate">
+                {avis.montantTexte || t('montantNonCommunique')}
+              </div>
+            )}
 
             {/* Date limite et délai relatif */}
             <div className="text-right shrink-0">

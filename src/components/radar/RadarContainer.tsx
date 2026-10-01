@@ -66,6 +66,19 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
               if (procUpper.includes('AMI') || procUpper.includes('ASMI')) procCanonique = 'AMI';
               else if (procUpper.includes('AOI') || procUpper.includes('INTERNATIONAL')) procCanonique = 'AOI';
 
+              const isNumValide =
+                typeof item.montantEstime === 'number' &&
+                Number.isFinite(item.montantEstime) &&
+                item.montantEstime > 0;
+              const montantFcfa = isNumValide ? item.montantEstime : null;
+
+              const montantTexte =
+                item.montantTexte &&
+                typeof item.montantTexte === 'string' &&
+                item.montantTexte.trim() !== ''
+                  ? item.montantTexte.trim()
+                  : null;
+
               return {
                 id: item.idAO,
                 titre: item.titreAO,
@@ -73,7 +86,8 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
                 region: item.region || 'Cameroun',
                 source: sourceCanonique,
                 procedure: procCanonique,
-                montantFcfa: Number(item.montantEstime) || 0,
+                montantFcfa,
+                montantTexte,
                 dateLimiteIso: item.dateLimite,
                 scoreIa: Number(item.scoreIA) || 0
               };

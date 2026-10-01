@@ -2,6 +2,12 @@ import { AvisRadar, CategorieAvis } from '../types/radar';
 import { joursRestantsDouala } from './dates';
 
 /**
+ * Rayon fixe (anneau intermédiaire) pour les avis sans montant chiffré.
+ * Attention : cette constante ne correspond à AUCUN montant en FCFA.
+ */
+export const RAYON_SANS_MONTANT = 0.5;
+
+/**
  * Détermine la catégorie (« national » ou « international ») selon la source.
  */
 export function categoriePourSource(source: AvisRadar['source']): CategorieAvis {
@@ -114,7 +120,10 @@ export function calculerPositionAvis(avis: AvisRadar): PositionRadar {
   const angleDeg = (joursPlafonnes / 30) * 360;
   const angleRad = (angleDeg * Math.PI) / 180;
 
-  const rayonFraction = rayonPourMontant(avis.montantFcfa);
+  const rayonFraction =
+    avis.montantFcfa !== null && avis.montantFcfa > 0
+      ? rayonPourMontant(avis.montantFcfa)
+      : RAYON_SANS_MONTANT;
   const R = rayonFraction * 245;
 
   const x = 270 + R * Math.sin(angleRad);

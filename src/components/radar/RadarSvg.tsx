@@ -167,6 +167,7 @@ export const RadarSvg: React.FC<RadarSvgProps> = ({
               const isNational = categoriePourSource(avis.source) === 'national';
               const isSelected = selectedId === avis.id;
               const isFiltre = estFiltre ? estFiltre(avis) : true;
+              const sansMontant = avis.montantFcfa === null || avis.montantFcfa <= 0;
 
               // Couleurs selon la catégorie (national: #0D9488, international: #0EA5E9)
               const couleurBaseHex = isNational ? '#0D9488' : '#0EA5E9';
@@ -181,13 +182,15 @@ export const RadarSvg: React.FC<RadarSvgProps> = ({
                 ? 'rgba(13, 148, 136, 0.7)'
                 : 'rgba(14, 165, 233, 0.7)';
 
-              const montantAffiche = formatterMontant(
-                avis.montantFcfa >= 1_000_000_000
-                  ? Number((avis.montantFcfa / 1_000_000_000).toFixed(1))
-                  : Math.round(avis.montantFcfa / 1_000_000),
-                avis.montantFcfa >= 1_000_000_000 ? 'Md' : 'M',
-                langue
-              );
+              const montantAffiche = sansMontant
+                ? t('montantNonCommunique')
+                : formatterMontant(
+                    avis.montantFcfa! >= 1_000_000_000
+                      ? Number((avis.montantFcfa! / 1_000_000_000).toFixed(1))
+                      : Math.round(avis.montantFcfa! / 1_000_000),
+                    avis.montantFcfa! >= 1_000_000_000 ? 'Md' : 'M',
+                    langue
+                  );
 
               const handleKeyDown = (e: React.KeyboardEvent) => {
                 if (!isFiltre) return;
@@ -259,30 +262,53 @@ export const RadarSvg: React.FC<RadarSvgProps> = ({
                   {/* ======================================================== */}
                   {/* POINT DE L'AVIS (Rayon 4.2 repos, échelle 1.35 actif)     */}
                   {/* ======================================================== */}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="4.2"
-                    fill={couleurRemplissage}
-                    stroke={couleurContour}
-                    strokeWidth="1"
-                    style={{
-                      transformOrigin: `${x}px ${y}px`,
-                      transform: isSelected ? 'scale(1.35)' : 'scale(1)',
-                      transformBox: 'fill-box',
-                      transition: 'transform 250ms ease-out',
-                      opacity: isSelected ? 1 : undefined
-                    }}
-                  />
+                  {sansMontant ? (
+                    /* Point CREUX : fond blanc, contour 1.5px couleur catégorie, pointillés courts '2 2' */
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="4.2"
+                      fill="#FFFFFF"
+                      stroke={couleurBaseHex}
+                      strokeWidth="1.5"
+                      strokeDasharray="2 2"
+                      style={{
+                        transformOrigin: `${x}px ${y}px`,
+                        transform: isSelected ? 'scale(1.35)' : 'scale(1)',
+                        transformBox: 'fill-box',
+                        transition: 'transform 250ms ease-out',
+                        opacity: 1
+                      }}
+                    />
+                  ) : (
+                    /* Point PLEIN standard */
+                    <>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="4.2"
+                        fill={couleurRemplissage}
+                        stroke={couleurContour}
+                        strokeWidth="1"
+                        style={{
+                          transformOrigin: `${x}px ${y}px`,
+                          transform: isSelected ? 'scale(1.35)' : 'scale(1)',
+                          transformBox: 'fill-box',
+                          transition: 'transform 250ms ease-out',
+                          opacity: isSelected ? 1 : undefined
+                        }}
+                      />
 
-                  {/* Noyau central net */}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={isSelected ? 2 : 1.5}
-                    fill={couleurBaseHex}
-                    className="pointer-events-none"
-                  />
+                      {/* Noyau central net */}
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={isSelected ? 2 : 1.5}
+                        fill={couleurBaseHex}
+                        className="pointer-events-none"
+                      />
+                    </>
+                  )}
                 </g>
               );
             })}

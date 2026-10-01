@@ -5,15 +5,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Building2,
-  MapPin,
-  Calendar,
-  Layers,
-  FileText,
-  AlertCircle,
   Info,
   RefreshCw,
-  Clock,
+  AlertCircle,
   Inbox
 } from 'lucide-react';
 import { Card, Badge, Button, BadgeTone } from '../ui';
@@ -22,7 +16,8 @@ import { UseAdminAvisReturn } from '../../hooks/useAdminAvis';
 import {
   formaterDateDouala,
   formaterDateHeureDouala,
-  joursRestantsDouala
+  joursRestantsDouala,
+  parserDateLimite
 } from '../../utils/dates';
 import { formatterMontant } from '../../i18n/accueil';
 
@@ -41,21 +36,30 @@ function isValidHttpUrl(url: unknown): boolean {
 }
 
 /**
- * Formate un montant en FCFA de façon soignée.
+ * Formate un montant en FCFA de façon soignée ou renvoie le montant texte / mention non communiqué.
  */
-function formatMontantAvis(montant: number | null | undefined): string {
-  if (montant === null || montant === undefined || montant <= 0) {
-    return 'Non communiqué';
+function formatMontantAvis(
+  montant: number | null | undefined,
+  montantTexte?: string | null
+): { text: string; isDiscret: boolean } {
+  if (montant !== null && montant !== undefined && montant > 0) {
+    if (montant >= 1_000_000_000) {
+      const val = Number((montant / 1_000_000_000).toFixed(1));
+      return { text: formatterMontant(val, 'Md', 'fr'), isDiscret: false };
+    }
+    if (montant >= 1_000_000) {
+      const val = Number((montant / 1_000_000).toFixed(1));
+      return { text: formatterMontant(val, 'M', 'fr'), isDiscret: false };
+    }
+    return { text: `${montant.toLocaleString('fr-FR')}\u00A0FCFA`, isDiscret: false };
   }
-  if (montant >= 1_000_000_000) {
-    const val = Number((montant / 1_000_000_000).toFixed(1));
-    return formatterMontant(val, 'Md', 'fr');
+
+  const texte = montantTexte?.trim();
+  if (texte) {
+    return { text: texte, isDiscret: true };
   }
-  if (montant >= 1_000_000) {
-    const val = Number((montant / 1_000_000).toFixed(1));
-    return formatterMontant(val, 'M', 'fr');
-  }
-  return `${montant.toLocaleString('fr-FR')}\u00A0FCFA`;
+
+  return { text: 'Non communiqué', isDiscret: true };
 }
 
 /**
@@ -83,7 +87,7 @@ function getStatutTone(statut?: string | null): BadgeTone {
 }
 
 /**
- * Détermine le badge de délai pour la date limite.
+ * Détermine le badge de délai pour une date limite ferme.
  */
 function getDelaiBadge(dateLimite: string | null | undefined): { label: string; tone: BadgeTone } | null {
   if (!dateLimite) return null;
@@ -99,6 +103,15 @@ function getDelaiBadge(dateLimite: string | null | undefined): { label: string; 
     return { label: `J-${j}`, tone: 'attente' };
   }
   return { label: `J-${j}`, tone: 'neutre' };
+}
+
+/**
+ * Vérifie si l'avis correspond à une attribution de marché.
+ */
+function isAvisAttribution(avis: AvisCollecte): boolean {
+  const proc = (avis.procedure || '').toUpperCase().trim();
+  const stat = (avis.statut || '').toUpperCase().trim();
+  return proc === 'ATTRIBUTION' || stat === 'ATTRIBUTION' || proc.includes('ATTRIBUTION');
 }
 
 /**
@@ -248,6 +261,7 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                 </div>
                 <div className="h-6 w-20 bg-slate-200 rounded-full motion-safe:animate-pulse" />
                 <div className="h-4 w-28 bg-slate-200 rounded motion-safe:animate-pulse" />
+                <div className="h-4 w-28 bg-slate-200 rounded motion-safe:animate-pulse" />
                 <div className="h-4 w-24 bg-slate-200 rounded motion-safe:animate-pulse" />
               </div>
             ))}
@@ -323,7 +337,7 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                 <th scope="col" className="py-3.5 px-3 text-[0.8125rem] font-semibold text-discret min-w-[140px]">
                   Montant
                 </th>
-                <th scope="col" className="py-3.5 px-3 text-[0.8125rem] font-semibold text-discret min-w-[150px]">
+                <th scope="col" className="py-3.5 px-3 text-[0.8125rem] font-semibold text-discret min-w-[160px]">
                   Date limite
                 </th>
                 <th scope="col" className="py-3.5 px-3 text-[0.8125rem] font-semibold text-discret min-w-[110px]">
@@ -340,8 +354,15 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
             <tbody className="divide-y divide-ligne">
               {avisList.map((avis) => {
                 const isExpanded = openId === avis.idAvis;
-                const delai = getDelaiBadge(avis.dateLimite);
                 const hasValidLink = isValidHttpUrl(avis.lien);
+                const montantInfo = formatMontantAvis(avis.montant, avis.montantTexte);
+
+                // Analyse Date limite (Règles LOT V3 avec priorité Attribution)
+                const isAttr = isAvisAttribution(avis);
+                const parsedDate = parserDateLimite(avis.dateLimite);
+                const isEstimee = Boolean(avis.dateLimiteEstimee && parsedDate);
+                const delai = !isAttr && !isEstimee && parsedDate ? getDelaiBadge(avis.dateLimite) : null;
+                const dateTexteLibre = !isAttr && !parsedDate && avis.dateLimiteTexte?.trim() ? avis.dateLimiteTexte.trim() : null;
 
                 return (
                   <React.Fragment key={avis.idAvis}>
@@ -374,20 +395,47 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                       </td>
 
                       {/* Colonne Montant */}
-                      <td className="py-3.5 px-3 align-top text-[0.875rem] font-medium text-encre">
-                        {formatMontantAvis(avis.montant)}
+                      <td className="py-3.5 px-3 align-top text-[0.875rem]">
+                        <span className={montantInfo.isDiscret ? 'text-discret font-normal' : 'font-medium text-encre'}>
+                          {montantInfo.text}
+                        </span>
                       </td>
 
-                      {/* Colonne Date limite & Délai */}
+                      {/* Colonne Date limite */}
                       <td className="py-3.5 px-3 align-top text-[0.875rem]">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="text-encre">{formaterDateDouala(avis.dateLimite)}</span>
-                          {delai && (
-                            <Badge ton={delai.tone} className="text-[0.75rem]">
-                              {delai.label}
+                        {isAttr ? (
+                          <span className="text-discret italic text-[0.875rem]">
+                            Marché attribué
+                          </span>
+                        ) : isEstimee ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-encre font-medium text-[0.875rem]">
+                              {`≈ ${formaterDateDouala(avis.dateLimite)} (estimée)`}
+                            </span>
+                            <Badge ton="neutre" className="text-[0.75rem]">
+                              Estimée
                             </Badge>
-                          )}
-                        </div>
+                          </div>
+                        ) : parsedDate ? (
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="text-encre text-[0.875rem]">{formaterDateDouala(avis.dateLimite)}</span>
+                            {delai && (
+                              <Badge ton={delai.tone} className="text-[0.75rem]">
+                                {delai.label}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : dateTexteLibre ? (
+                          <span
+                            className="text-[0.875rem] text-discret line-clamp-2 max-w-[180px] leading-snug cursor-help"
+                            title={dateTexteLibre}
+                            tabIndex={0}
+                          >
+                            {dateTexteLibre}
+                          </span>
+                        ) : (
+                          <span className="text-discret text-[0.875rem]">—</span>
+                        )}
                       </td>
 
                       {/* Colonne Statut */}
@@ -465,6 +513,45 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
 
                               <div>
                                 <span className="block text-[0.8125rem] font-semibold text-discret">
+                                  Montant estimé
+                                </span>
+                                <span className={montantInfo.isDiscret ? 'text-discret' : 'text-encre font-medium'}>
+                                  {montantInfo.text}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="block text-[0.8125rem] font-semibold text-discret">
+                                  Date limite
+                                </span>
+                                {isAttr ? (
+                                  <span className="text-discret italic">
+                                    Marché attribué
+                                  </span>
+                                ) : isEstimee ? (
+                                  <div>
+                                    <span className="text-encre font-medium">
+                                      {`≈ ${formaterDateDouala(avis.dateLimite)} (estimée)`}
+                                    </span>
+                                    <span className="block text-[0.8125rem] text-discret italic mt-0.5">
+                                      Échéance estimée par la collecte : à vérifier dans le dossier (DAO)
+                                    </span>
+                                  </div>
+                                ) : parsedDate ? (
+                                  <span className="text-encre">
+                                    {formaterDateDouala(avis.dateLimite)}
+                                  </span>
+                                ) : dateTexteLibre ? (
+                                  <span className="text-discret" title={dateTexteLibre}>
+                                    {dateTexteLibre}
+                                  </span>
+                                ) : (
+                                  <span className="text-discret">—</span>
+                                )}
+                              </div>
+
+                              <div>
+                                <span className="block text-[0.8125rem] font-semibold text-discret">
                                   Date de publication
                                 </span>
                                 <span className="text-encre">
@@ -516,8 +603,15 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
       <div className="lg:hidden space-y-3">
         {avisList.map((avis) => {
           const isExpanded = openId === avis.idAvis;
-          const delai = getDelaiBadge(avis.dateLimite);
           const hasValidLink = isValidHttpUrl(avis.lien);
+          const montantInfo = formatMontantAvis(avis.montant, avis.montantTexte);
+
+          // Analyse Date limite (Règles LOT V3 avec priorité Attribution)
+          const isAttr = isAvisAttribution(avis);
+          const parsedDate = parserDateLimite(avis.dateLimite);
+          const isEstimee = Boolean(avis.dateLimiteEstimee && parsedDate);
+          const delai = !isAttr && !isEstimee && parsedDate ? getDelaiBadge(avis.dateLimite) : null;
+          const dateTexteLibre = !isAttr && !parsedDate && avis.dateLimiteTexte?.trim() ? avis.dateLimiteTexte.trim() : null;
 
           return (
             <Card
@@ -536,11 +630,15 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                       {avis.statut || '—'}
                     </Badge>
                   </div>
-                  {delai && (
+                  {isEstimee ? (
+                    <Badge ton="neutre" className="text-[0.75rem]">
+                      Estimée
+                    </Badge>
+                  ) : delai ? (
                     <Badge ton={delai.tone} className="text-[0.75rem]">
                       {delai.label}
                     </Badge>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Titre et Numéro */}
@@ -569,11 +667,27 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                   </div>
                   <div>
                     <span className="block text-[0.75rem] font-semibold text-discret">Montant</span>
-                    <span className="text-encre font-medium">{formatMontantAvis(avis.montant)}</span>
+                    <span className={montantInfo.isDiscret ? 'text-discret font-normal truncate block' : 'text-encre font-medium truncate block'} title={montantInfo.text}>
+                      {montantInfo.text}
+                    </span>
                   </div>
                   <div>
                     <span className="block text-[0.75rem] font-semibold text-discret">Date limite</span>
-                    <span className="text-encre">{formaterDateDouala(avis.dateLimite)}</span>
+                    {isAttr ? (
+                      <span className="text-discret italic text-[0.8125rem]">Marché attribué</span>
+                    ) : isEstimee ? (
+                      <span className="text-encre font-medium text-[0.8125rem]">
+                        {`≈ ${formaterDateDouala(avis.dateLimite)} (estimée)`}
+                      </span>
+                    ) : parsedDate ? (
+                      <span className="text-encre">{formaterDateDouala(avis.dateLimite)}</span>
+                    ) : dateTexteLibre ? (
+                      <span className="text-discret line-clamp-1" title={dateTexteLibre}>
+                        {dateTexteLibre}
+                      </span>
+                    ) : (
+                      <span className="text-discret">—</span>
+                    )}
                   </div>
                 </div>
 
@@ -615,6 +729,33 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                     <div>
                       <span className="font-semibold text-discret block">Procédure :</span>
                       <span className="text-encre">{avis.procedure || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-discret block">Montant :</span>
+                      <span className={montantInfo.isDiscret ? 'text-discret' : 'text-encre font-medium'}>
+                        {montantInfo.text}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-discret block">Date limite :</span>
+                      {isAttr ? (
+                        <span className="text-discret italic">Marché attribué</span>
+                      ) : isEstimee ? (
+                        <div>
+                          <span className="text-encre font-medium">
+                            {`≈ ${formaterDateDouala(avis.dateLimite)} (estimée)`}
+                          </span>
+                          <span className="block text-[0.75rem] text-discret italic mt-0.5">
+                            Échéance estimée par la collecte : à vérifier dans le dossier (DAO)
+                          </span>
+                        </div>
+                      ) : parsedDate ? (
+                        <span className="text-encre">{formaterDateDouala(avis.dateLimite)}</span>
+                      ) : dateTexteLibre ? (
+                        <span className="text-discret" title={dateTexteLibre}>{dateTexteLibre}</span>
+                      ) : (
+                        <span className="text-discret">—</span>
+                      )}
                     </div>
                     <div>
                       <span className="font-semibold text-discret block">Date de publication :</span>

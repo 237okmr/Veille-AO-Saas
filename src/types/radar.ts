@@ -1,5 +1,5 @@
 /**
- * Types officiels pour le Radar Market Advisor CM (LOT 3A)
+ * Types officiels pour le Radar Market Advisor CM (LOT 3A & LOT H3)
  */
 
 export interface AvisRadar {
@@ -9,7 +9,8 @@ export interface AvisRadar {
   region: string;
   source: 'ARMP' | 'COLEPS' | 'BAILLEURS' | 'ONU';
   procedure: 'AONO' | 'AMI' | 'AOI';
-  montantFcfa: number;
+  montantFcfa: number | null;
+  montantTexte?: string | null;
   dateLimiteIso: string;
   scoreIa: number; // 0 à 5
 }

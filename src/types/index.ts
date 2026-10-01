@@ -3,7 +3,8 @@ export interface RadarBlipItem {
   titreAO: string;
   maitreOuvrage: string;
   region: string;
-  montantEstime: number;
+  montantEstime: number | null;
+  montantTexte?: string | null;
   dateLimite: string;
   typeProcedure: string;
   scoreIA: number; // e.g. 4.8 out of 5
@@ -381,7 +382,10 @@ export interface AvisCollecte {
   sourceType: 'NATIONAL' | 'INTERNATIONAL' | null;
   procedure: string | null;
   montant: number | null;
+  montantTexte?: string | null;
   dateLimite: string | null;
+  dateLimiteEstimee?: boolean;
+  dateLimiteTexte?: string | null;
   datePublication: string | null;
   dateCollecte: string | null;
   statut: string;
