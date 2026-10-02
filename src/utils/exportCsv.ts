@@ -113,15 +113,16 @@ export function sanitizeClientSlug(nom: string): string {
 
 /**
  * Escapes a cell for French CSV:
- * - Prepends single quote for formula injection characters (=, +, -, @)
- * - Quotes strings containing semicolons, quotes, or newlines and doubles quotes
+ * - Prepends single quote for formula injection characters (=, +, -, @), leading tabs (\t),
+ *   carriage returns (\r), or spaces followed by (=, +, -, @) unless already starting with a single quote.
+ * - Quotes strings containing semicolons, quotes, or newlines and doubles quotes.
  */
 export function escapeCsvCell(val: unknown): string {
   if (val === null || val === undefined) return '';
   let str = String(val);
 
   // Formula injection defense
-  if (/^[=+\-@]/.test(str)) {
+  if (!str.startsWith("'") && (/^[\t\r]/.test(str) || /^ *[=+\-@]/.test(str))) {
     str = `'${str}`;
   }
 

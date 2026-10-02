@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:dates": "tsx src/utils/dates.selftest.ts"
+    "test:csv": "tsx src/utils/exportCsv.selftest.ts",
+    "test:dates": "tsx src/utils/dates.selftest.ts",
+    "test:liens": "tsx src/utils/liensSurs.selftest.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

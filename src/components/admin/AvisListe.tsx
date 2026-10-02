@@ -20,19 +20,10 @@ import {
   parserDateLimite
 } from '../../utils/dates';
 import { formatterMontant } from '../../i18n/accueil';
+import { lienSur } from '../../utils/liensSurs';
 
 export interface AvisListeProps {
   hook: UseAdminAvisReturn;
-}
-
-/**
- * Valide strictement si un lien commence par http:// ou https://
- * Rejette toute autre valeur (javascript:, data:, etc.)
- */
-function isValidHttpUrl(url: unknown): boolean {
-  if (typeof url !== 'string') return false;
-  const trimmed = url.trim();
-  return /^https?:\/\//i.test(trimmed);
 }
 
 /**
@@ -354,7 +345,8 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
             <tbody className="divide-y divide-ligne">
               {avisList.map((avis) => {
                 const isExpanded = openId === avis.idAvis;
-                const hasValidLink = isValidHttpUrl(avis.lien);
+                const lienAvisSur = lienSur(avis.lien);
+                const hasValidLink = lienAvisSur !== null;
                 const montantInfo = formatMontantAvis(avis.montant, avis.montantTexte);
 
                 // Analyse Date limite (Règles LOT V3 avec priorité Attribution)
@@ -574,7 +566,7 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                                 </span>
                                 {hasValidLink ? (
                                   <a
-                                    href={avis.lien!}
+                                    href={lienAvisSur}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1.5 text-teal font-semibold hover:underline mt-0.5"
@@ -603,7 +595,8 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
       <div className="lg:hidden space-y-3">
         {avisList.map((avis) => {
           const isExpanded = openId === avis.idAvis;
-          const hasValidLink = isValidHttpUrl(avis.lien);
+          const lienAvisSur = lienSur(avis.lien);
+          const hasValidLink = lienAvisSur !== null;
           const montantInfo = formatMontantAvis(avis.montant, avis.montantTexte);
 
           // Analyse Date limite (Règles LOT V3 avec priorité Attribution)
@@ -772,7 +765,7 @@ export const AvisListe: React.FC<AvisListeProps> = ({ hook }) => {
                     {hasValidLink && (
                       <div className="pt-2 border-t border-ligne">
                         <a
-                          href={avis.lien!}
+                          href={lienAvisSur}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="h-[44px] inline-flex items-center gap-2 text-teal font-semibold hover:underline"

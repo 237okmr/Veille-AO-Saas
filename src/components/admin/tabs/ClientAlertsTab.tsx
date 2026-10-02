@@ -15,6 +15,7 @@ import { api } from '../../../services/api';
 import { useToast } from '../../../context/ToastContext';
 import { exportAlertsToCsv } from '../../../utils/exportCsv';
 import { formaterDateDouala, formaterDateHeureDouala } from '../../../utils/dates';
+import { lienSur } from '../../../utils/liensSurs';
 
 interface ClientAlertsTabProps {
   clientId: string;
@@ -649,17 +650,20 @@ export const ClientAlertsTab: React.FC<ClientAlertsTabProps> = ({ clientId, clie
 
               {/* Action Links */}
               <div className="flex items-center space-x-3 pt-3 border-t border-slate-200">
-                {selectedAlert.lienDAO && (
-                  <a
-                    href={selectedAlert.lienDAO}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-center font-bold text-xs flex items-center justify-center space-x-1.5"
-                  >
-                    <span>Télécharger DAO</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
+                {(() => {
+                  const lienDaoSur = lienSur(selectedAlert.lienDAO);
+                  return lienDaoSur ? (
+                    <a
+                      href={lienDaoSur}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-center font-bold text-xs flex items-center justify-center space-x-1.5"
+                    >
+                      <span>Télécharger DAO</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : null;
+                })()}
                 <button
                   type="button"
                   onClick={() => setSelectedAlert(null)}

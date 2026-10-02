@@ -12,6 +12,7 @@ import {
 import { useToast } from '../../context/ToastContext';
 import { ClientDetailView } from './ClientDetailView';
 import { ClientCreateWizardModal } from './ClientCreateWizardModal';
+import { lienSurAvecHttps } from '../../utils/liensSurs';
 
 const formatList = (val: any, fallback = 'Toutes'): string => {
   if (!val) return fallback;
@@ -193,39 +194,41 @@ export const AdminClients: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {clients.map((c) => (
-                <tr
-                  key={c.idClient}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <td className="py-3.5 px-4">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedClientId(c.idClient)}
-                          className="hover:underline hover:text-emerald-600 text-left font-bold"
-                        >
-                          {c.nom}
-                        </button>
-                        {c.siteWeb && (
-                          <a
-                            href={c.siteWeb}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-slate-400 hover:text-teal-600"
+              {clients.map((c) => {
+                const siteWebSur = lienSurAvecHttps(c.siteWeb);
+                return (
+                  <tr
+                    key={c.idClient}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-3.5 px-4">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedClientId(c.idClient)}
+                            className="hover:underline hover:text-emerald-600 text-left font-bold"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                            {c.nom}
+                          </button>
+                          {siteWebSur !== null && (
+                            <a
+                              href={siteWebSur}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-400 hover:text-teal-600"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                          <span className="font-mono text-teal-700 dark:text-teal-400">{c.idClient}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{c.emailDestinataire}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                        <span className="font-mono text-teal-700 dark:text-teal-400">{c.idClient}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{c.emailDestinataire}</span>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
                   <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
                     <span className="line-clamp-1 max-w-[140px]" title={formatList(c.regions, 'Toutes')}>
@@ -291,8 +294,9 @@ export const AdminClients: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              );
+            })}
+          </tbody>
           </table>
         </div>
       </div>

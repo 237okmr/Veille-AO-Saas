@@ -24,6 +24,7 @@ import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { formaterDateDouala, formaterDateHeureDouala } from '../../utils/dates';
+import { lienSur } from '../../utils/liensSurs';
 
 interface AlertDetailModalProps {
   alert: TenderAlert;
@@ -658,26 +659,29 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({ alert, onClo
               </button>
             </div>
 
-            {alert.lienDao ? (
-              <a
-                href={alert.lienDao}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 min-h-[44px] py-2 px-4 rounded-xl text-[0.8125rem] font-semibold text-white bg-teal-700 hover:bg-teal-800 transition-colors shadow-xs"
-              >
-                <Download className="w-4 h-4" />
-                <span>Télécharger le DAO Officiel</span>
-              </a>
-            ) : (
-              <button
-                type="button"
-                onClick={() => toast.info('Avis officiel', 'Le lien vers le DAO sera disponible dès publication du complément par l’ARMP.')}
-                className="flex items-center gap-2 min-h-[44px] py-2 px-4 rounded-xl text-[0.8125rem] font-semibold text-teal-800 border border-teal-300 hover:bg-teal-50 transition-colors cursor-pointer"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Consulter sur ARMP</span>
-              </button>
-            )}
+            {(() => {
+              const lienDaoSur = lienSur(alert.lienDao);
+              return lienDaoSur ? (
+                <a
+                  href={lienDaoSur}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 min-h-[44px] py-2 px-4 rounded-xl text-[0.8125rem] font-semibold text-white bg-teal-700 hover:bg-teal-800 transition-colors shadow-xs"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Télécharger le DAO Officiel</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => toast.info('Avis officiel', 'Le lien vers le DAO sera disponible dès publication du complément par l’ARMP.')}
+                  className="flex items-center gap-2 min-h-[44px] py-2 px-4 rounded-xl text-[0.8125rem] font-semibold text-teal-800 border border-teal-300 hover:bg-teal-50 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Consulter sur ARMP</span>
+                </button>
+              );
+            })()}
           </div>
         </div>
       </div>

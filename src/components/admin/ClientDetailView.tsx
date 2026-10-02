@@ -48,6 +48,7 @@ import { ClientAlertsTab } from './tabs/ClientAlertsTab';
 import { ClientAiCacheTab } from './tabs/ClientAiCacheTab';
 import { ClientAuditTab } from './tabs/ClientAuditTab';
 import { ClientBillingTab } from './ClientBillingTab';
+import { lienSurAvecHttps } from '../../utils/liensSurs';
 
 interface ClientDetailViewProps {
   clientId: string;
@@ -576,6 +577,8 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
     );
   }
 
+  const siteWebSur = lienSurAvecHttps(client.siteWeb);
+
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* Top Header Card */}
@@ -619,15 +622,15 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
                   <span>{client.emailDestinataire}</span>
                 </span>
-                {client.siteWeb && (
+                {siteWebSur !== null && (
                   <a
-                    href={client.siteWeb.startsWith('http') ? client.siteWeb : `https://${client.siteWeb}`}
+                    href={siteWebSur}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="flex items-center space-x-1 text-emerald-600 hover:underline"
                   >
                     <Globe className="w-3.5 h-3.5" />
-                    <span>{client.siteWeb.replace(/^https?:\/\//, '')}</span>
+                    <span>{client.siteWeb?.replace(/^https?:\/\//, '')}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
