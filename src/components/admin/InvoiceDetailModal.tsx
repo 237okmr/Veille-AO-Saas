@@ -127,7 +127,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                Plateforme d'Intelligence des Marchés Publics & Veille IA
+                Plateforme d'Analyse des Marchés Publics & Veille Stratégique
               </p>
               <p className="text-[11px] text-slate-400">
                 Douala / Yaoundé · République du Cameroun · RC/DLA/2026/B/102

@@ -67,7 +67,7 @@ const TEXTES = {
   procedureTitre: 'Types de procédures',
   procedureSousTitre: 'AON, AOO, AOI, Demandes de Cotation',
   procedureCount: (count: number, pct: number) => `${count} marchés (${pct}%)`,
-  iaRecentesTitre: 'Meilleures correspondances IA récentes',
+  iaRecentesTitre: 'Meilleures correspondances récentes',
   iaRecentesSousTitre: 'Avis prioritaires à score élevé nécessitant votre attention',
   iaRecentesVoirTout: 'Voir tout',
   topMoTitre: "Top Maîtres d'Ouvrage ciblés",
@@ -465,7 +465,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
                       </div>
                       <div className="text-right shrink-0">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.8125rem] font-bold font-mono bg-teal-50 text-teal-800 border border-teal-200">
-                          {alert.scoreMatch}% IA
+                          {alert.scoreMatch}%
                         </span>
                       </div>
                     </div>

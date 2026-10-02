@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'client-alerts':
         return 'Mes alertes & Marchés ciblés';
       case 'client-profile':
-        return 'Profil entreprise & Critères IA';
+        return 'Profil entreprise & Critères';
       case 'client-preferences':
         return 'Préférences de notification';
       case 'client-deadlines':
@@ -104,8 +104,8 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 text-[0.8125rem] py-1.5 px-3 rounded-champ border border-ligne text-discret hover:text-encre hover:bg-onglets transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-focus"
             title="Consulter le statut du proxy Google Apps Script"
           >
-            <span className={`w-2 h-2 rounded-full ${apiConfig?.isConfigured ? 'bg-emeraude' : 'bg-amber-500 animate-pulse'}`} />
-            <span>{apiConfig?.isConfigured ? 'API Apps Script active' : 'Mode Sandbox'}</span>
+            <span className={`w-2 h-2 rounded-full ${apiConfig?.isConfigured ? 'bg-emeraude' : 'bg-erreur'}`} />
+            <span>{apiConfig?.isConfigured ? 'API Apps Script active' : 'Non configuré'}</span>
             <Settings2 className="w-4 h-4 text-discret" />
           </button>
         )}
@@ -180,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="w-full flex items-center gap-2.5 px-4 py-2 text-[0.8125rem] text-encre hover:bg-onglets transition-colors cursor-pointer"
                     >
                       <Building2 className="w-4 h-4 text-discret" />
-                      <span>Mon profil entreprise & IA</span>
+                      <span>Mon profil entreprise & critères</span>
                     </button>
                     <button
                       type="button"

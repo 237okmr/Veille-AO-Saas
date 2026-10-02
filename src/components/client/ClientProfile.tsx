@@ -110,7 +110,7 @@ export const ClientProfile: React.FC = () => {
       const res = await api.updatePromptMetier(promptMetier);
       if (res.donnees) {
         setProfile(res.donnees);
-        toast.success('Prompt métier enregistré', 'Le profil de ciblage IA utilisera cette description.');
+        toast.success('Description métier enregistrée', 'Les critères de ciblage utiliseront cette description.');
       }
     } catch (err: any) {
       toast.error('Erreur', err.message);
@@ -140,10 +140,10 @@ export const ClientProfile: React.FC = () => {
       const res = await api.regenerateAiProfile();
       if (res.donnees) {
         setProfile(res.donnees);
-        toast.success('Profil IA régénéré avec succès', 'Les mots-clés sémantiques et inclusions/exclusions ont été recalculés.');
+        toast.success('Critères sémantiques actualisés', 'Les mots-clés et inclusions/exclusions ont été recalculés.');
       }
     } catch (err: any) {
-      toast.error('Erreur de régénération', err.message);
+      toast.error('Erreur d’actualisation', err.message);
     } finally {
       setRegenerating(false);
     }
@@ -152,8 +152,8 @@ export const ClientProfile: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 space-y-6 max-w-5xl mx-auto animate-pulse">
-        <div className="h-48 rounded-2xl bg-slate-200 dark:bg-slate-800" />
-        <div className="h-64 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="h-48 rounded-2xl bg-slate-200" />
+        <div className="h-64 rounded-2xl bg-slate-200" />
       </div>
     );
   }
@@ -162,10 +162,10 @@ export const ClientProfile: React.FC = () => {
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
       {/* Title */}
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Profil Entreprise & Critères de Veille IA
+        <h2 className="text-xl font-bold tracking-tight text-slate-900">
+          Profil Entreprise & Critères de Veille
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-slate-500">
           Personnalisez votre périmètre géographique, vos seuils financiers et la signature sémantique de votre société.
         </p>
       </div>
@@ -173,15 +173,15 @@ export const ClientProfile: React.FC = () => {
       {/* Main Form */}
       <form onSubmit={handleSaveGeneral} className="space-y-6">
         {/* Section 1: Informations Générales */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
             <Building2 className="w-4 h-4 text-teal-700" />
             <span>Informations de l'entreprise</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Raison sociale / Nom commercial
               </label>
               <input
@@ -189,12 +189,12 @@ export const ClientProfile: React.FC = () => {
                 required
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Email de réception des alertes AO
               </label>
               <input
@@ -202,7 +202,7 @@ export const ClientProfile: React.FC = () => {
                 required
                 value={emailDestinataire}
                 onChange={(e) => setEmailDestinataire(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
               />
             </div>
           </div>
@@ -210,7 +210,7 @@ export const ClientProfile: React.FC = () => {
           {/* Budget minimum & Seuil score */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Montant estimatif minimum exigé (FCFA)
               </label>
               <div className="relative">
@@ -220,7 +220,7 @@ export const ClientProfile: React.FC = () => {
                   step="1000000"
                   value={montantMinimum}
                   onChange={(e) => setMontantMinimum(Number(e.target.value))}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 font-mono"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 font-mono"
                 />
                 <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 font-mono pointer-events-none">
                   FCFA
@@ -233,10 +233,10 @@ export const ClientProfile: React.FC = () => {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Seuil de score IA pour déclenchement d'alerte
+                <label className="text-xs font-semibold text-slate-700">
+                  Seuil de score de pertinence pour déclenchement d'alerte
                 </label>
-                <span className="text-xs font-mono font-bold text-teal-700 dark:text-teal-400">
+                <span className="text-xs font-mono font-bold text-teal-700">
                   {seuilScore}%
                 </span>
               </div>
@@ -257,13 +257,13 @@ export const ClientProfile: React.FC = () => {
         </div>
 
         {/* Section 2: Régions cibles au Cameroun */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
               <MapPin className="w-4 h-4 text-teal-700" />
               <span>Régions d'intervention ciblées au Cameroun</span>
             </div>
-            <span className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+            <span className="text-xs font-semibold text-teal-700">
               {regions.length} / {CAMEROON_REGIONS.length} sélectionnée(s)
             </span>
           </div>
@@ -278,12 +278,12 @@ export const ClientProfile: React.FC = () => {
                   onClick={() => handleToggleRegion(r)}
                   className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-medium transition-all text-left ${
                     checked
-                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-950/60 text-teal-900 dark:text-teal-200 font-semibold shadow-2xs'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      ? 'border-teal-600 bg-teal-50 text-teal-900 font-semibold shadow-2xs'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
                   <span>{r}</span>
-                  {checked && <Check className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />}
+                  {checked && <Check className="w-3.5 h-3.5 text-teal-700" />}
                 </button>
               );
             })}
@@ -291,13 +291,13 @@ export const ClientProfile: React.FC = () => {
         </div>
 
         {/* Section 3: Types de procédures autorisées */}
-        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
               <FileText className="w-4 h-4 text-teal-700" />
               <span>Procédures de passation acceptées</span>
             </div>
-            <span className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+            <span className="text-xs font-semibold text-teal-700">
               {procedures.length} type(s)
             </span>
           </div>
@@ -312,15 +312,15 @@ export const ClientProfile: React.FC = () => {
                   onClick={() => handleToggleProcedure(p.code)}
                   className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-all text-left ${
                     checked
-                      ? 'border-teal-600 bg-teal-50 dark:bg-teal-950/60 text-teal-900 dark:text-teal-200 font-semibold shadow-2xs'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                      ? 'border-teal-600 bg-teal-50 text-teal-900 font-semibold shadow-2xs'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
                 >
                   <div className="space-y-0.5">
-                    <span className="font-bold text-slate-900 dark:text-white">{p.code}</span>
+                    <span className="font-bold text-slate-900">{p.code}</span>
                     <p className="text-[11px] text-slate-500 line-clamp-1">{p.label}</p>
                   </div>
-                  {checked && <Check className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0 ml-2" />}
+                  {checked && <Check className="w-4 h-4 text-teal-700 shrink-0 ml-2" />}
                 </button>
               );
             })}
@@ -339,27 +339,27 @@ export const ClientProfile: React.FC = () => {
         </div>
       </form>
 
-      {/* Section 4: Prompt Métier & Analyse IA */}
-      <div className="p-5 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/20 dark:bg-amber-950/20 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-amber-200/60 dark:border-amber-900/40">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+      {/* Section 4: Prompt Métier & Analyse Sémantique */}
+      <div className="p-5 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-amber-200/60">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
             <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>Prompt Métier & Synthèse Sémantique IA</span>
+            <span>Description Métier & Synthèse Sémantique</span>
           </div>
 
           <button
             type="button"
             onClick={handleRegenerateAi}
             disabled={regenerating}
-            className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-xs font-semibold text-amber-900 dark:text-amber-200 bg-amber-200/80 dark:bg-amber-900/60 hover:bg-amber-300 dark:hover:bg-amber-800/80 transition-colors shadow-2xs cursor-pointer"
+            className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-xs font-semibold text-amber-900 bg-amber-200/80 hover:bg-amber-300 transition-colors shadow-2xs cursor-pointer"
           >
             <RotateCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
-            <span>{regenerating ? 'Régénération IA...' : 'Régénérer le profil IA'}</span>
+            <span>{regenerating ? 'Actualisation...' : 'Actualiser les critères'}</span>
           </button>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
             Description libre de votre savoir-faire et spécialités métiers
           </label>
           <textarea
@@ -367,23 +367,23 @@ export const ClientProfile: React.FC = () => {
             value={promptMetier}
             onChange={(e) => setPromptMetier(e.target.value)}
             placeholder="Exemple : Entreprise de BTP spécialisée en terrassement, voirie urbaine, assainissement et construction d'ouvrages d'art. Nous disposons d'engins lourds à Douala et Yaoundé..."
-            className="w-full p-3 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors leading-relaxed"
+            className="w-full p-3 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors leading-relaxed"
           />
           <div className="flex justify-end mt-2">
             <button
               type="button"
               onClick={handleSavePrompt}
               disabled={saving}
-              className="py-1.5 px-3 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+              className="py-1.5 px-3 rounded-lg text-xs font-semibold text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
             >
-              Enregistrer le prompt métier
+              Enregistrer la description
             </button>
           </div>
         </div>
 
         {/* Website Scraper */}
-        <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+        <div className="pt-2 border-t border-amber-200/60">
+          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
             Site web de l'entreprise (pour analyse sémantique automatique)
           </label>
           <div className="flex gap-2">
@@ -396,25 +396,25 @@ export const ClientProfile: React.FC = () => {
                 value={siteWeb}
                 onChange={(e) => setSiteWeb(e.target.value)}
                 placeholder="https://www.mon-entreprise.cm"
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-colors"
               />
             </div>
             <button
               type="button"
               onClick={handleSaveSiteWeb}
-              className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-colors"
+              className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
             >
               Enregistrer
             </button>
           </div>
         </div>
 
-        {/* AI Breakdown Card */}
+        {/* Breakdown Card */}
         {profile?.profilIA && (
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-3 mt-4">
+          <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 mt-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Signature IA Extraite
+              <span className="text-xs font-bold text-slate-900">
+                Critères Sémantiques Extraits
               </span>
               <span className="text-[11px] font-mono text-slate-400">
                 Dernier calcul : {profile.profilIA.dernierCalcul ? formaterDateDouala(profile.profilIA.dernierCalcul) : 'Récent'}
@@ -424,14 +424,14 @@ export const ClientProfile: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               {/* Inclusions */}
               <div className="space-y-1.5">
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                <span className="font-semibold text-emerald-700">
                   Activités & Mots cibles inclus :
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {toArrayHelper(profile.profilIA.inclusions).map((inc) => (
                     <span
                       key={inc}
-                      className="px-2 py-0.5 rounded text-[11px] bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      className="px-2 py-0.5 rounded text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200"
                     >
                       {inc}
                     </span>
@@ -441,14 +441,14 @@ export const ClientProfile: React.FC = () => {
 
               {/* Exclusions */}
               <div className="space-y-1.5">
-                <span className="font-semibold text-rose-700 dark:text-rose-400">
+                <span className="font-semibold text-rose-700">
                   Mots & Prestations exclus :
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {toArrayHelper(profile.profilIA.exclusions).map((exc) => (
                     <span
                       key={exc}
-                      className="px-2 py-0.5 rounded text-[11px] bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
+                      className="px-2 py-0.5 rounded text-[11px] bg-rose-50 text-rose-800 border border-rose-200"
                     >
                       {exc}
                     </span>

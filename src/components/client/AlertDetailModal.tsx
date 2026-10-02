@@ -429,7 +429,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({ alert, onClo
               <div className="flex items-center justify-between text-[0.8125rem] text-teal-900 mb-1 font-semibold">
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-teal-600" />
-                  <span>Score Ciblage IA</span>
+                  <span>Score de Pertinence</span>
                 </div>
                 <span className="font-bold font-mono text-base text-teal-800">{alert.scoreMatch}%</span>
               </div>
@@ -459,11 +459,11 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({ alert, onClo
             </div>
           </div>
 
-          {/* Justification IA */}
+          {/* Analyse de correspondance */}
           <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
             <div className="flex items-center gap-2 text-[0.8125rem] font-bold text-amber-900">
               <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
-              <span>Analyse et Justification de l'Intelligence Artificielle :</span>
+              <span>Analyse de correspondance et critères :</span>
             </div>
             <p className="text-[0.875rem] text-slate-700 leading-relaxed">
               {alert.justificationIA}

@@ -412,16 +412,16 @@ export const ClientAlerts: React.FC = () => {
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
             >
               <option value="datePublication-desc">Plus récents d'abord</option>
-              <option value="scoreMatch-desc">Score IA le plus élevé</option>
+              <option value="scoreMatch-desc">Score de pertinence le plus élevé</option>
               <option value="dateLimite-asc">Date limite la plus proche</option>
             </select>
           </div>
         </div>
 
         {/* Second Row: Min score slider & Unread checkbox & reset */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 text-xs">
           <div className="flex items-center gap-3">
-            <span className="text-slate-500">Score IA minimum :</span>
+            <span className="text-slate-500">Score minimum :</span>
             <input
               type="range"
               min="0"
@@ -434,7 +434,7 @@ export const ClientAlerts: React.FC = () => {
               }}
               className="w-28 accent-teal-600"
             />
-            <span className="font-mono font-bold text-teal-700 dark:text-teal-400 tabular-nums">
+            <span className="font-mono font-bold text-teal-700 tabular-nums">
               {scoreMin}%
             </span>
           </div>
@@ -566,17 +566,17 @@ export const ClientAlerts: React.FC = () => {
                     </span>
                   )}
                   <div className="text-right">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-teal-50 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold font-mono bg-teal-50 text-teal-800 border border-teal-200">
                       <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-                      <span>{alert.scoreMatch}% IA</span>
+                      <span>{alert.scoreMatch}%</span>
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* AI Justification Snippet */}
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                <span className="font-semibold text-slate-800 dark:text-slate-200">Justification IA : </span>
+              {/* Justification Snippet */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 leading-relaxed">
+                <span className="font-semibold text-slate-800">Analyse de pertinence : </span>
                 <span>{alert.justificationIA}</span>
               </div>
 

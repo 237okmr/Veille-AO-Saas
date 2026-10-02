@@ -277,3 +277,46 @@ export function formaterDateHeureDouala(valeur: unknown, langue: 'fr' | 'en' = '
     return '—';
   }
 }
+
+/**
+ * Formate un temps écoulé relatif (ex. « quelques instants », « 12 min », « 2 h », « 1 jour »)
+ * par rapport à l'heure actuelle, sans jamais lever d'exception.
+ */
+export function formaterTempsEcoule(valeur: unknown, langue: 'fr' | 'en' = 'fr'): string {
+  const d = parserDateLimite(valeur);
+  if (!d) {
+    return '—';
+  }
+
+  try {
+    const maintenant = new Date();
+    const diffMs = maintenant.getTime() - d.getTime();
+    if (diffMs < 0) {
+      return langue === 'fr' ? 'quelques instants' : 'a few moments';
+    }
+
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHeures = Math.floor(diffMin / 60);
+    const diffJours = Math.floor(diffHeures / 24);
+
+    if (diffMin < 1) {
+      return langue === 'fr' ? 'quelques instants' : 'a few moments';
+    }
+    if (diffMin < 60) {
+      return `${diffMin}\u00A0min`;
+    }
+    if (diffHeures < 24) {
+      return `${diffHeures}\u00A0h`;
+    }
+    if (diffJours === 1) {
+      return langue === 'fr' ? '1\u00A0jour' : '1\u00A0day';
+    }
+    if (diffJours < 7) {
+      return langue === 'fr' ? `${diffJours}\u00A0jours` : `${diffJours}\u00A0days`;
+    }
+
+    return formaterDateHeureDouala(d, langue);
+  } catch {
+    return '—';
+  }
+}

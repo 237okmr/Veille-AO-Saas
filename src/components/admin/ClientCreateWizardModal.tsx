@@ -209,7 +209,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
     if (promptMetier.trim().length < 50 && rawInclusions.length < 3) {
       toast.error(
         'Critère obligatoire manquant',
-        'Vous devez obligatoirement fournir un PROMPT MÉTIER IA (≥ 50 caractères) OU au moins 3 MOTS-CLÉS D’INCLUSION manuels.'
+        'Vous devez obligatoirement fournir une DESCRIPTION DU MÉTIER (≥ 50 caractères) OU au moins 3 MOTS-CLÉS D’INCLUSION manuels.'
       );
       return false;
     }
@@ -343,7 +343,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
           setShowAiLoader(false);
           toast.error(
             'Délai dépassé',
-            'Client créé. La génération IA a pris plus de 45s. Réessayez depuis la fiche client.'
+            'Client créé. L\'analyse sémantique a pris plus de 45s. Réessayez depuis la fiche client.'
           );
         }}
       />
@@ -373,26 +373,26 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div
-            className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]"
+            className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]"
             role="dialog"
             aria-modal="true"
           >
             {/* Header with Step Tracker */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-6 border-b border-slate-200 bg-slate-50/50">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2.5 rounded-2xl bg-emerald-600 text-white shadow-md">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                    <h2 className="text-lg font-black text-slate-900">
                       Nouveau Client & Configuration Matching
                     </h2>
                     <p className="text-xs text-slate-500">
                       Étape {currentStep} sur 4 :{' '}
                       {currentStep === 1 && 'Coordonnées & Identification'}
                       {currentStep === 2 && 'Critères de Matching & Filtres'}
-                      {currentStep === 3 && 'Profil Métier & Analyse Gemini'}
+                      {currentStep === 3 && 'Profil Métier & Analyse Sémantique'}
                       {currentStep === 4 && 'Mots-Clés de Secours & Finalisation'}
                     </p>
                   </div>
@@ -400,7 +400,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -412,7 +412,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                   { step: 1, label: '1. Coordonnées' },
                   { step: 2, label: '2. Critères' },
                   { step: 3, label: '3. Profil Métier' },
-                  { step: 4, label: '4. Options & IA' }
+                  { step: 4, label: '4. Options & Profil' }
                 ].map((s) => (
                   <div key={s.step} className="space-y-1.5">
                     <div
@@ -421,15 +421,15 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                           ? 'bg-emerald-600'
                           : s.step === currentStep
                           ? 'bg-emerald-500 animate-pulse'
-                          : 'bg-slate-200 dark:bg-slate-800'
+                          : 'bg-slate-200'
                       }`}
                     />
                     <span
                       className={`text-[10px] font-bold block truncate ${
                         s.step === currentStep
-                          ? 'text-emerald-600 dark:text-emerald-400'
+                          ? 'text-emerald-600'
                           : s.step < currentStep
-                          ? 'text-slate-700 dark:text-slate-300'
+                          ? 'text-slate-700'
                           : 'text-slate-400'
                       }`}
                     >
@@ -679,8 +679,8 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                   {/* Prompt Métier */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Description du Métier (Prompt Gemini IA)
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Description du Métier & Savoir-faire
                       </label>
                       <span
                         className={`text-xs font-mono font-bold ${
@@ -695,17 +695,17 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                       value={promptMetier}
                       onChange={(e) => setPromptMetier(e.target.value)}
                       placeholder="Ex: Entreprise de BTP spécialisée dans les travaux de voirie, terrassement, bitumage en béton bitumineux, ouvrages d'art et assainissement pluvial au Cameroun. Nous répondons aux marchés d'infrastructures routières et ferroviaires..."
-                      className="w-full p-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white leading-relaxed focus:ring-2 focus:ring-emerald-500"
+                      className="w-full p-3.5 rounded-2xl border border-slate-300 bg-white text-xs text-slate-900 leading-relaxed focus:ring-2 focus:ring-emerald-500"
                     />
                     <p className="text-[11px] text-slate-400">
-                      Ce texte alimente l'analyse sémantique vectorielle Gemini pour générer les 120-180 inclusions.
+                      Ce texte alimente l'analyse sémantique pour extraire les mots-clés d'inclusion et d'exclusion.
                     </p>
                   </div>
 
                   {/* Site Web */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Site Web de l'Entreprise (Pour Crawl Gemini)
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Site Web de l'Entreprise (Pour Analyse Sémantique)
                     </label>
                     <div className="relative">
                       <Globe className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -714,11 +714,11 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                         placeholder="https://www.mon-entreprise.cm"
                         value={siteWeb}
                         onChange={(e) => setSiteWeb(e.target.value)}
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500"
+                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                     <p className="text-[11px] text-slate-400">
-                      Gemini crawle les pages "Services", "Projets" et "À propos" pour enrichir le profil.
+                      L'analyse automatique parcourt les pages clés pour enrichir le profil de ciblage.
                     </p>
                   </div>
 
@@ -810,8 +810,8 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                     </div>
                   </div>
 
-                  {/* Option IA Immédiate */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-transparent border border-amber-300/60 dark:border-amber-900/60 flex items-start space-x-3.5">
+                  {/* Option Extraction Immédiate */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-transparent border border-amber-300/60 flex items-start space-x-3.5">
                     <input
                       type="checkbox"
                       id="optGenererIa"
@@ -820,13 +820,13 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
                       className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 mt-1 cursor-pointer"
                     />
                     <label htmlFor="optGenererIa" className="cursor-pointer space-y-0.5">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                      <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Générer le profil IA immédiatement avec Gemini (recommandé)</span>
+                        <span>Extraire les critères sémantiques automatiquement (recommandé)</span>
                       </span>
                       <p className="text-[11px] text-slate-500">
-                        Lance le crawl du site web et les 3 passes Gemini (120-180 inclusions, 20-50 exclusions, profil compact).
-                        En cas d'échec ou timeout, le client sera quand même créé avec ses mots-clés de secours.
+                        Lance l'analyse sémantique du site web et de la description métier (inclusions, exclusions, synthèse).
+                        En cas de délai d'attente, le client sera créé avec ses critères de base.
                       </p>
                     </label>
                   </div>

@@ -17,16 +17,16 @@ import { formaterDateHeureDouala } from '../../utils/dates';
 const ACTION_DESCRIPTIONS: Record<string, string> = {
   'routine-nuit': 'Exécute la collecte nocturne des avis ARMP et le matching sémantique avec les profils clients.',
   'routine-matin': 'Prépare et expédie les alertes de marchés publics par email aux clients concernés.',
-  'collecte-complete': 'Session quotidienne complète de bout en bout : collecte ARMP, matching IA et envoi des alertes.',
+  'collecte-complete': 'Session quotidienne complète de bout en bout : collecte ARMP, matching sémantique et envoi des alertes.',
   'collecte-armp': 'Interroge le portail officiel ARMP et extrait les derniers avis d\'appel d\'offres publiés.',
   'matching': 'Effectue le scoring et matching sémantique des avis collectés avec les profils entreprises.',
   'envoi-emails': 'Distribue les emails de notification personnalisés aux entreprises pour les marchés pertinents.',
   'validation': 'Vérifie et normalise les avis récemment collectés (dates, montants, régions, lots).',
   'dedup': 'Détecte et élimine les avis ARMP collectés en doublon pour garantir l\'unicité de la base.',
   'audit-sante': 'Analyse l\'efficacité du moteur de matching, distribution des scores et taux de conversion.',
-  'purge-cache': 'Vide le cache d\'inférence sémantique Gemini pour forcer la réévaluation fraîche.',
+  'purge-cache': 'Vide le cache d\'évaluation sémantique pour forcer la réévaluation fraîche.',
   'audit-dedup': 'Génère un rapport détaillé sur les doublons détectés et l\'intégrité des données.',
-  'diagnostic-ia': 'Vérifie la clé API Gemini, les quotas d\'appels, la connectivité et la latence du modèle.',
+  'diagnostic-ia': 'Vérifie la clé API du moteur d\'analyse, les quotas d\'appels, la connectivité et la latence.',
   'fraicheur-profils': 'Vérifie si les profils d\'intérêts des clients nécessitent une mise à jour ou régénération.',
   'migrer-compacts': 'Met à jour et optimise la représentation vectorielle/compacte des critères clients.',
   'backfill-normalisation': 'Re-traite l\'ensemble de l\'historique des avis avec les règles de normalisation actuelles.',
@@ -132,11 +132,11 @@ export const AdminPipeline: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <Layers className="w-5 h-5 text-teal-700 dark:text-teal-400" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Actions du Pipeline de Collecte & IA
+              Actions du Pipeline de Collecte & Ciblage
             </h2>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Orchestration manuelle des robots de scraping ARMP, du moteur sémantique Gemini et de la distribution d'alertes.
+            Orchestration manuelle de la collecte ARMP, du moteur sémantique de ciblage et de la distribution d'alertes.
           </p>
         </div>
 

@@ -95,7 +95,7 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
 
       if (res.succes) {
         toast.success(
-          'Profil IA mis à jour',
+          'Profil de ciblage mis à jour',
           'Les modifications manuelles ont été enregistrées dans la feuille PROFILS_ENRICHIS.'
         );
         setHasUnsavedChanges(false);
@@ -143,10 +143,10 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                Intelligence Artificielle & Profil Vectoriel
+                Profil Métier & Mots-Clés de Ciblage
               </h2>
               <p className="text-xs text-slate-500">
-                Généré par Gemini à partir du prompt métier et du site web de {client.nom}.
+                Généré à partir de la description métier et du site web de {client.nom}.
               </p>
             </div>
           </div>
@@ -213,8 +213,8 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
               <p className="font-bold">Mode Override Débloqué :</p>
               <p className="mt-0.5">
                 Vous pouvez ajouter ou supprimer des termes dans les inclusions, exclusions et MO.
-                Note : le <strong>profil compact</strong> reste immuable pour préserver la cohérence des embeddings.
-                Toute prochaine régénération par Gemini écrasera vos modifications manuelles.
+                Note : le <strong>profil compact</strong> reste immuable pour préserver la cohérence des correspondances.
+                Toute prochaine régénération écrasera vos modifications manuelles.
               </p>
             </div>
           </div>
@@ -301,7 +301,7 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
         <pre className="p-4 rounded-xl bg-slate-900 text-slate-200 font-mono text-xs leading-relaxed border border-slate-800 overflow-x-auto select-all whitespace-pre-wrap max-h-56 overflow-y-auto">
           {profilIA.profilCompact || (
             <span className="text-slate-500 italic">
-              Aucun profil compact généré. Cliquez sur « Régénérer » pour analyser ce client avec Gemini.
+              Aucun profil compact généré. Cliquez sur « Régénérer » pour analyser et générer le profil.
             </span>
           )}
         </pre>
@@ -311,7 +311,7 @@ export const ClientAiTab: React.FC<ClientAiTabProps> = ({
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            Explorateur Détaillé des Mots-Clés IA (TagBrowser)
+            Explorateur Détaillé des Mots-Clés Métiers (TagBrowser)
           </h3>
           <p className="text-xs text-slate-500">
             Recherche temps réel et pagination par 50 éléments. Cliquez sur un tag pour le copier ou le supprimer (si override débloqué).

@@ -45,7 +45,7 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
       ? t('procAMI')
       : t('procAOI');
 
-  // Formatage du score IA
+  // Formatage du score de pertinence
   const scoreFormate =
     langue === 'fr'
       ? `${avis.scoreIa.toFixed(1).replace('.', ',')}/5`
@@ -98,7 +98,7 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
           className="w-full bg-white/95 backdrop-blur-[12px] border border-ligne/80 rounded-carte shadow-hud p-3 sm:p-4 relative z-20 overflow-visible text-encre"
         >
           {/* ================================================================ */}
-          {/* 1. LIGNE HAUTE : Source + Procédure (gauche) & Score IA (droite) */}
+          {/* 1. LIGNE HAUTE : Source + Procédure (gauche) & Score (droite)     */}
           {/* ================================================================ */}
           <div className="flex items-center justify-between gap-1.5 mb-2.5">
             {/* Gauche : Source & Procédure */}
@@ -124,7 +124,7 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
               </span>
             </div>
 
-            {/* Droite : Badge Score IA (rebond désactivé si mouvement réduit) */}
+            {/* Droite : Badge Score de pertinence (rebond désactivé si mouvement réduit) */}
             <motion.div
               initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.96 }}
               animate={{ scale: 1 }}

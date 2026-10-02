@@ -26,7 +26,7 @@ export function useCycleAvis({
     return true;
   });
 
-  // 2. Retenir les 5 avis au meilleur score IA
+  // 2. Retenir les 5 avis au meilleur score de pertinence
   const top5Avis = [...avisFiltres]
     .sort((a, b) => b.scoreIa - a.scoreIa)
     .slice(0, 5);

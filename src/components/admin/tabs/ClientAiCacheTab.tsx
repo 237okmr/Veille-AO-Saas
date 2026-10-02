@@ -47,7 +47,7 @@ export const ClientAiCacheTab: React.FC<ClientAiCacheTabProps> = ({ clientId, cl
         setTotal(res.donnees.total || 0);
       }
     } catch (err: any) {
-      toast.error('Erreur Cache IA', err.message);
+      toast.error('Erreur Cache des Évaluations', err.message);
     } finally {
       setLoading(false);
     }
@@ -73,10 +73,10 @@ export const ClientAiCacheTab: React.FC<ClientAiCacheTabProps> = ({ clientId, cl
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Cache des Évaluations IA (CACHE_IA)
+                Cache des Évaluations de Pertinence
               </h2>
               <p className="text-xs text-slate-500">
-                Historique des jugements sémantiques portés par Gemini pour la paire [Client / Avis].
+                Historique des évaluations sémantiques pour la paire [Client / Avis].
               </p>
             </div>
           </div>
@@ -99,7 +99,7 @@ export const ClientAiCacheTab: React.FC<ClientAiCacheTabProps> = ({ clientId, cl
         {loading ? (
           <div className="flex flex-col items-center justify-center p-12 space-y-3">
             <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs text-slate-500">Chargement des évaluations Gemini...</p>
+            <p className="text-xs text-slate-500">Chargement des évaluations...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs space-y-2">
@@ -115,7 +115,7 @@ export const ClientAiCacheTab: React.FC<ClientAiCacheTabProps> = ({ clientId, cl
               <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="py-3 px-4">Identifiant Avis (AO)</th>
-                  <th className="py-3 px-4 text-center">Note IA (1-5)</th>
+                  <th className="py-3 px-4 text-center">Note de Pertinence (1-5)</th>
                   <th className="py-3 px-4">Motif & Justification Sémantique</th>
                   <th className="py-3 px-4 text-right">Date d'Évaluation</th>
                 </tr>

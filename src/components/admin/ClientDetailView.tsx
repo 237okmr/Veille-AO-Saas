@@ -318,12 +318,12 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
     });
   };
 
-  // Quick Action: Regenerate IA with Confirmation Level 2 ("CONFIRMER")
+  // Quick Action: Regenerate with Confirmation Level 2 ("CONFIRMER")
   const handleRegenerateIa = () => {
     if (!client) return;
     setConfirmModal({
       isOpen: true,
-      title: 'Régénération du profil IA Gemini',
+      title: 'Régénération du profil de ciblage',
       description: (
         <div className="space-y-2">
           <p>
@@ -331,12 +331,11 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
             <strong className="text-slate-900 dark:text-white">{client.nom}</strong>.
           </p>
           <p className="text-xs text-slate-500">
-            Cette opération effectuera le crawl du site web ({client.siteWeb || 'aucun'}), exécutera les 3 passes
-            Gemini et recalculera le profil compact. Le nouveau profil sera appliqué lors du prochain cycle de matching.
+            Cette opération effectuera l'analyse du site web ({client.siteWeb || 'aucun'}) et recalculera le profil compact. Le nouveau profil sera appliqué lors du prochain cycle de matching.
           </p>
         </div>
       ),
-      confirmText: 'Lancer la régénération IA',
+      confirmText: 'Lancer la régénération',
       confirmVariant: 'warning',
       level: 2,
       requiredWord: 'CONFIRMER',
@@ -344,15 +343,15 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         setAiGenerating(true);
         const startTime = Date.now();
-        toast.info('Génération IA en cours', 'Gemini analyse le profil métier et le site web...');
+        toast.info('Analyse en cours', 'Calcul du profil métier et analyse du site web...');
         try {
           const res = await api.regenerateAdminClientAi(client.idClient);
           const elapsedSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
           if (res.donnees) {
             setClient(res.donnees);
             toast.success(
-              'Profil IA régénéré avec succès !',
-              'Le profil compact et les nouveaux mots-clés sont disponibles dans l’onglet IA.'
+              'Profil régénéré avec succès !',
+              'Le profil compact et les nouveaux mots-clés sont disponibles dans l’onglet Profil.'
             );
             if (onClientUpdated) onClientUpdated(res.donnees);
             setAiBilanModal({
@@ -361,7 +360,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
             });
           }
         } catch (err: any) {
-          toast.error('Erreur régénération IA', err.message);
+          toast.error('Erreur de régénération', err.message);
         } finally {
           setAiGenerating(false);
         }
@@ -611,7 +610,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
                 {aiGenerating && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 animate-pulse border border-amber-300">
                     <Sparkles className="w-3 h-3 mr-1 animate-spin" />
-                    Génération IA en cours...
+                    Analyse et calcul en cours...
                   </span>
                 )}
               </div>
@@ -656,7 +655,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
               className="px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white flex items-center space-x-1.5 shadow-sm transition-all"
             >
               <Sparkles className={`w-4 h-4 ${aiGenerating ? 'animate-spin' : ''}`} />
-              <span>Régénérer Profil IA</span>
+              <span>Régénérer Profil</span>
             </button>
 
             <button
@@ -674,10 +673,10 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
           <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar">
             {[
               { key: 'info', label: 'Informations & Matching', icon: Sliders },
-              { key: 'ai', label: 'Intelligence Artificielle', icon: Sparkles },
+              { key: 'ai', label: 'Profil de Ciblage', icon: Sparkles },
               { key: 'users', label: 'Utilisateurs associés', icon: Users, badge: users.length },
               { key: 'alerts', label: 'Alertes & Historique', icon: Bell },
-              { key: 'cache-ia', label: 'Cache IA', icon: Database },
+              { key: 'cache-ia', label: 'Cache des Évaluations', icon: Database },
               { key: 'preferences', label: 'Préférences Notif.', icon: FileText },
               { key: 'billing', label: 'Abonnement & Factures', icon: CreditCard },
               { key: 'audit', label: 'Journal d’Audit', icon: History }
@@ -829,7 +828,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
             {/* SITE_WEB */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Site Web Entreprise (Crawl Gemini)
+                Site Web Entreprise
               </label>
               <input
                 type="url"
@@ -907,7 +906,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
           <div className="space-y-1.5 border-t border-slate-200 dark:border-slate-800 pt-4">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Description du Métier (Prompt Gemini IA)
+                Description du Métier & Savoir-faire
               </label>
               <span className={`text-xs font-mono ${infoForm.promptMetier.length >= 50 ? 'text-emerald-600' : 'text-amber-500'}`}>
                 {infoForm.promptMetier.length} caractères (recommandé: 500+)
@@ -917,7 +916,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
               rows={4}
               value={infoForm.promptMetier}
               onChange={e => setInfoForm({ ...infoForm, promptMetier: e.target.value })}
-              placeholder="Décrivez en détail les spécialités, technologies, matériaux, types de chantiers ou prestations pour alimenter l'analyse sémantique Gemini..."
+              placeholder="Décrivez en détail les spécialités, technologies, matériaux, types de chantiers ou prestations pour alimenter l'analyse sémantique et le ciblage..."
               className="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white leading-relaxed focus:ring-2 focus:ring-emerald-500 font-sans"
             />
           </div>
@@ -955,7 +954,7 @@ export const ClientDetailView: React.FC<ClientDetailViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-200 dark:border-slate-800 pt-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Mots-clés manuels d'Inclusion (Fallback si pas de profil IA)
+                Mots-clés manuels d'Inclusion
               </label>
               <input
                 type="text"

@@ -571,12 +571,15 @@ export const api = {
   },
 
   // Diagnostic endpoints
+  ping: () => request<{ build?: string; [key: string]: any }>('/ping'),
+
   getDiagnosticStatus: () =>
     request<{
       apiUrlServer: string;
       apiUrlServerMasked: string;
       isConfigured: boolean;
       mode: string;
+      proxySecretConforme?: boolean;
       directCalls: Array<{ file: string; line: number; snippet: string }>;
       serverLogs: Array<{ id: number; timestamp: string; level: 'info' | 'warn' | 'error'; message: string }>;
     }>('/diagnostic/status'),

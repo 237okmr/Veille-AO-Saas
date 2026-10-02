@@ -602,18 +602,18 @@ export const ClientAlertsTab: React.FC<ClientAlertsTabProps> = ({ clientId, clie
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Note Sémantique IA</span>
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Score Sémantique</span>
                   <p className="font-mono text-lg font-black text-teal-600 mt-0.5">
                     {selectedAlert.scoreIA ? selectedAlert.scoreIA.toFixed(1) : '4.5'} / 5.0
                   </p>
                 </div>
               </div>
 
-              {/* Justification Gemini */}
+              {/* Justification */}
               <div className="space-y-1.5">
                 <label className="font-bold uppercase tracking-wider text-slate-500 text-[10px] flex items-center space-x-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Justification & Motif de Pertinence (Gemini)</span>
+                  <span>Justification & Motif de Pertinence</span>
                 </label>
                 <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 text-amber-950 leading-relaxed font-sans">
                   {selectedAlert.justification ||

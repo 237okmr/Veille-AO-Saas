@@ -20,9 +20,9 @@ export const AiGenerationLoader: React.FC<AiGenerationLoaderProps> = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   const steps = [
-    { label: "Analyse sémantique du prompt métier...", icon: Cpu, time: 0 },
-    { label: siteWeb ? `Crawl et extraction du site web (${siteWeb})...` : "Vérification des sources sectorielles...", icon: Globe, time: 8 },
-    { label: "Génération vectorielle Gemini (3 passes : Inclusions, Exclusions, MO)...", icon: Sparkles, time: 18 },
+    { label: "Analyse sémantique du profil métier...", icon: Cpu, time: 0 },
+    { label: siteWeb ? `Analyse et extraction du site web (${siteWeb})...` : "Vérification des sources sectorielles...", icon: Globe, time: 8 },
+    { label: "Génération sémantique (Inclusions, Exclusions, MO)...", icon: Sparkles, time: 18 },
     { label: "Compilation du profil compact et calcul de couverture...", icon: FileCheck2, time: 32 }
   ];
 
@@ -82,10 +82,10 @@ export const AiGenerationLoader: React.FC<AiGenerationLoaderProps> = ({
         {/* Title & Target */}
         <div className="space-y-1.5">
           <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-            Génération du Profil IA en cours...
+            Génération du Profil de Ciblage en cours...
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Analyse approfondie Gemini pour <strong className="text-slate-900 dark:text-slate-200">{clientNom}</strong>
+            Analyse approfondie pour <strong className="text-slate-900 dark:text-slate-200">{clientNom}</strong>
           </p>
         </div>
 
@@ -156,7 +156,7 @@ export const AiGenerationLoader: React.FC<AiGenerationLoaderProps> = ({
           <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-800 dark:text-amber-300 flex items-center space-x-2 text-left">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              Le crawl et l'inférence prennent un peu plus de temps. En cas de dépassement, le client sera créé avec ses mots-clés de secours.
+              L'analyse du site web et la génération prennent un peu plus de temps. En cas de dépassement, le client sera créé avec ses critères initiaux.
             </span>
           </div>
         )}

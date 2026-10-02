@@ -83,11 +83,11 @@ export const AdminSettings: React.FC = () => {
 
   const handleSaveGemini = async () => {
     if (!cle1.trim() && !cle2.trim()) {
-      toast.error('Champs vides', 'Renseignez au moins une clé Gemini.');
+      toast.error('Champs vides', 'Renseignez au moins une clé.');
       return;
     }
     const confirmed = window.confirm(
-      "Attention : les 2 champs ci-dessous remplaceront ENTIÈREMENT les clés Gemini actuellement dans le coffre. " +
+      "Attention : les 2 champs ci-dessous remplaceront ENTIÈREMENT les clés actuellement dans le coffre. " +
       "Un champ laissé vide n'est PAS conservé — renseignez les 2 clés si vous voulez les garder toutes les deux. Continuer ?"
     );
     if (!confirmed) return;
@@ -95,7 +95,7 @@ export const AdminSettings: React.FC = () => {
     setGeminiBusy(true);
     try {
       const res = await api.updateReglagesClesGemini({ cle1, cle2 });
-      toast.success('Clés Gemini mises à jour', `${res.donnees?.nbCles} clé(s) dans le coffre.`);
+      toast.success('Clés mises à jour', `${res.donnees?.nbCles} clé(s) dans le coffre.`);
       setCle1('');
       setCle2('');
       load();
@@ -317,10 +317,10 @@ export const AdminSettings: React.FC = () => {
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">Clés API (coffre)</h3>
         </div>
 
-        {/* Gemini */}
+        {/* Clés Moteur Principal */}
         <div className="space-y-3 pb-5 border-b border-slate-100 dark:border-slate-800">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Gemini — {data?.clesApi.Cle_API_IA.nbCles ?? 0} clé(s) actuellement dans le coffre
+            Moteur Principal — {data?.clesApi.Cle_API_IA.nbCles ?? 0} clé(s) actuellement dans le coffre
             {data?.clesApi.Cle_API_IA.masquees.length ? (
               <> (<span className="font-mono">{data.clesApi.Cle_API_IA.masquees.join(', ')}</span>)</>
             ) : null}
@@ -329,14 +329,14 @@ export const AdminSettings: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="password"
-              placeholder="Nouvelle clé Gemini #1"
+              placeholder="Nouvelle clé principale #1"
               value={cle1}
               onChange={(e) => setCle1(e.target.value)}
               className="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
             />
             <input
               type="password"
-              placeholder="Nouvelle clé Gemini #2"
+              placeholder="Nouvelle clé principale #2"
               value={cle2}
               onChange={(e) => setCle2(e.target.value)}
               className="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
@@ -352,15 +352,15 @@ export const AdminSettings: React.FC = () => {
               className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
-              {geminiBusy ? 'Enregistrement...' : 'Mettre à jour les clés Gemini'}
+              {geminiBusy ? 'Enregistrement...' : 'Mettre à jour les clés'}
             </button>
           </div>
         </div>
 
-        {/* DeepSeek */}
+        {/* Moteur Secondaire */}
         <div className="space-y-3">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            DeepSeek (fallback) — {data?.clesApi.Cle_API_IA_DeepSeek.nbCles ?? 0} clé(s) actuellement dans le coffre
+            Moteur Secondaire (fallback) — {data?.clesApi.Cle_API_IA_DeepSeek.nbCles ?? 0} clé(s) actuellement dans le coffre
             {data?.clesApi.Cle_API_IA_DeepSeek.masquees.length ? (
               <> (<span className="font-mono">{data.clesApi.Cle_API_IA_DeepSeek.masquees.join(', ')}</span>)</>
             ) : null}

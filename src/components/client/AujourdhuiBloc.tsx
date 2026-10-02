@@ -239,7 +239,7 @@ export const AujourdhuiBloc: React.FC<AujourdhuiBlocProps> = ({
                         <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.8125rem] font-bold font-mono bg-teal-50 text-teal-800 border border-teal-200">
                             <Sparkles className="w-3 h-3 text-teal-600" />
-                            {alert.scoreMatch}% IA
+                            {alert.scoreMatch}%
                           </span>
                           {jr === null ? (
                             <Badge ton="attente" point={false}>

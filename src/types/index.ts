@@ -18,6 +18,7 @@ export interface RadarBlipItem {
 
 export interface PublicRadarData {
   simulation?: boolean | null;
+  perime?: boolean | null;
   derniereSynchro?: string | null;
   statutSynchro?: 'ACTIF' | 'SYNCHRONISE' | string | null;
   totalAvisAnalysesPeriode?: number | null;
@@ -433,7 +434,7 @@ export interface ApiResponse<T = any> {
 
 export interface ApiConfigInfo {
   isConfigured: boolean;
-  mode: 'APPS_SCRIPT_PRODUCTION' | 'SANDBOX_SIMULATION';
+  mode: 'APPS_SCRIPT_PRODUCTION' | 'NON_CONFIGURE';
   apiUrlDisplay: string;
   version: string;
 }

@@ -70,11 +70,11 @@ export const AdminClients: React.FC = () => {
 
   const handleRegenerateAi = async (client: ClientProfile) => {
     try {
-      toast.info('Régénération IA lancée...', `Recalcul du profil sémantique pour ${client.nom}`);
+      toast.info('Actualisation du ciblage lancée...', `Recalcul des critères pour ${client.nom}`);
       const res = await api.regenerateAdminClientAi(client.idClient);
       if (res.donnees) {
         setClients((prev) => prev.map((c) => (c.idClient === client.idClient ? res.donnees : c)));
-        toast.success('Profil IA régénéré', `Nouvelle signature calculée pour ${client.nom}`);
+        toast.success('Critères sémantiques actualisés', `Nouvelle signature calculée pour ${client.nom}`);
       }
     } catch (e: any) {
       toast.error('Erreur', e.message);
@@ -111,11 +111,11 @@ export const AdminClients: React.FC = () => {
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">
             Gestion des Entreprises Clientes
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Répertoire des entreprises abonnées, configuration des critères et des signatures IA.
+          <p className="text-xs text-slate-500">
+            Répertoire des entreprises abonnées, configuration des critères et des filtres de ciblage.
           </p>
         </div>
 
@@ -263,8 +263,8 @@ export const AdminClients: React.FC = () => {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => handleRegenerateAi(c)}
-                        className="p-1.5 rounded-lg border border-amber-200 dark:border-amber-800 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition-colors"
-                        title="Régénérer profil IA"
+                        className="p-1.5 rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                        title="Actualiser les critères sémantiques"
                       >
                         <RotateCw className="w-3.5 h-3.5" />
                       </button>

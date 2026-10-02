@@ -58,7 +58,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     typeof stats.alertes.enAttente === 'number' &&
     typeof stats.alertes.envoyees === 'number'
       ? `${stats.alertes.enAttente} en attente · ${stats.alertes.envoyees} envoyées`
-      : 'Matches IA validés';
+      : 'Correspondances validées';
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
@@ -75,7 +75,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             Supervision Globale du Système
           </h2>
           <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-            Gestion multi-entreprises, monitoring du pipeline de scraping ARMP et santé des quotas IA.
+            Gestion multi-entreprises, monitoring du pipeline de collecte ARMP et suivi des quotas de traitement.
           </p>
         </div>
 
@@ -178,12 +178,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* Quotas & System Status Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Gemini AI Quota */}
+        {/* Moteur de Pertinence Quota */}
         <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-teal-600" />
-              <h3 className="text-xs font-bold text-slate-900">Quota Gemini AI (Scoring)</h3>
+              <h3 className="text-xs font-bold text-slate-900">Moteur de Pertinence (Scoring)</h3>
             </div>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
               NOMINAL
@@ -192,7 +192,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-mono">
-              <span className="text-slate-500">Jetons consommés :</span>
+              <span className="text-slate-500">Analyses effectuées :</span>
               <span className="font-bold text-slate-900">
                 {(stats?.quotas?.geminiAi?.utilise ?? stats?.quotas?.geminiAujourdhui ?? 0).toLocaleString()} / {(stats?.quotas?.geminiAi?.total ?? 10000).toLocaleString()}
               </span>
@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             </div>
           </div>
           <p className="text-[11px] text-slate-500">
-            Utilisé pour vectoriser et scorer la pertinence des appels d'offres ARMP.
+            Utilisé pour analyser et scorer la pertinence des appels d'offres ARMP.
           </p>
         </div>
 
@@ -285,7 +285,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           </div>
           <h4 className="text-sm font-bold text-slate-900">Gérer les Entreprises</h4>
           <p className="text-xs text-slate-500 font-normal">
-            Créer des clients, configurer leurs critères régionaux et régénérer leurs profils IA.
+            Créer des clients, configurer leurs critères régionaux et gérer leurs profils de ciblage.
           </p>
         </button>
 

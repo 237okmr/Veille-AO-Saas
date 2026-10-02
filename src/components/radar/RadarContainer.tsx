@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { AvisRadar } from '../../types/radar';
 import { genererExemplesAvisRadar, deduireSourceCanonique } from '../../utils/radarUtils';
-import { parserDateLimite, estExpiree } from '../../utils/dates';
+import { parserDateLimite, estExpiree, formaterTempsEcoule } from '../../utils/dates';
 import { RadarSvg } from './RadarSvg';
 import { AnnonceCard } from './AnnonceCard';
 import { useCycleAvis } from '../../hooks/useCycleAvis';
@@ -16,19 +16,21 @@ interface RadarContainerProps {
 export const RadarContainer: React.FC<RadarContainerProps> = ({
   onSelectAvisProp
 }) => {
-  const { t } = useLangue();
+  const { t, langue } = useLangue();
   const shouldReduceMotion = useReducedMotion();
 
   // État initial sans saut visuel : liste vide et état de chargement actif
   const [avisList, setAvisList] = useState<AvisRadar[]>([]);
   const [isChargement, setIsChargement] = useState<boolean>(true);
   const [isSimulated, setIsSimulated] = useState<boolean>(true);
+  const [isPerime, setIsPerime] = useState<boolean>(false);
+  const [derniereSynchro, setDerniereSynchro] = useState<string | null>(null);
   const [isHoveredOrFocused, setIsHoveredOrFocused] = useState<boolean>(false);
 
   // État de pause global : survol/focus ou réduction de mouvement demandée
   const isCyclePaused = isHoveredOrFocused || Boolean(shouldReduceMotion) || isChargement;
 
-  // Hook de défilement automatique (5,5s, top 5 IA)
+  // Hook de défilement automatique (5,5s, top 5 avis pertinents)
   const {
     selectedId,
     avisActif,
@@ -48,6 +50,8 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
       try {
         const res = await api.getPublicRadarTicker();
         const isSimule = res?.donnees?.simulation === true;
+        const perime = res?.donnees?.perime === true;
+        const dateSynchro = res?.donnees?.derniereSynchro || null;
 
         // Condition stricte : succès, non simulé par le backend, et présence d'avis
         if (
@@ -100,6 +104,8 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
           if (avisValides.length > 0) {
             setAvisList(avisValides);
             setIsSimulated(false);
+            setIsPerime(perime);
+            setDerniereSynchro(dateSynchro);
             setIsChargement(false);
             return;
           }
@@ -111,6 +117,8 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
       if (isMounted) {
         setAvisList(genererExemplesAvisRadar());
         setIsSimulated(true);
+        setIsPerime(false);
+        setDerniereSynchro(null);
         setIsChargement(false);
       }
     };
@@ -202,6 +210,13 @@ export const RadarContainer: React.FC<RadarContainerProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mention « Dernière mise à jour il y a X » si données réelles périmées */}
+      {!isChargement && !isSimulated && isPerime && derniereSynchro && (
+        <p className="text-center text-[11px] text-discret select-none mt-0.5">
+          {t('derniereMajIlYA').replace('{temps}', formaterTempsEcoule(derniereSynchro, langue))}
+        </p>
+      )}
 
       {/* Mention « Exemples illustratifs. » affichée UNIQUEMENT si données simulées/d'exemple */}
       {!isChargement && isSimulated && (
