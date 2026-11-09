@@ -58,6 +58,7 @@ const TEXTES = {
 
   sourcesTitre: 'Fraîcheur des sources',
   sourcesJamais: 'Jamais',
+  sourcesIndisponibles: 'Les dates de dernière collecte ne sont pas disponibles pour le moment.',
 
   analysesTitre: 'Analyses détaillées',
   analysesSousTitre: 'Répartition territoriale, types de marchés et maîtres d’ouvrage ciblés',
@@ -301,12 +302,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) 
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           {sources.length === 0 ? (
-            ['ARMP', 'COLEPS', 'MINMAP', 'DGTCFM', 'FEICOM', 'BAILLEURS'].map((s) => (
-              <div key={s} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
-                <p className="font-bold text-[0.8125rem] text-slate-700">{s}</p>
-                <p className="text-[0.8125rem] text-slate-500">Collecte active</p>
-              </div>
-            ))
+            <p className="col-span-full text-[0.8125rem] text-slate-500">
+              {TEXTES.sourcesIndisponibles}
+            </p>
           ) : (
             sources.map((s) => (
               <div key={s.plateforme} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1">
