@@ -69,6 +69,9 @@ function saasHacherMotDePasse(motDePasse, sel) {
 }
 
 function saasVerifierMotDePasse(motDePasse, sel, hashAttendu) {
+  // LOT LC1 : un compte sans mot de passe (hash ou sel vide, cas des espaces pilotes) ne peut JAMAIS
+  // se connecter par mot de passe. Sans cette garde, deux chaînes vides seraient jugées égales.
+  if (!motDePasse || !sel || !hashAttendu) return false;
   const hash = saasHacherMotDePasse(motDePasse, sel);
   if (hash.length !== hashAttendu.length) return false;
   // Comparaison en temps constant
