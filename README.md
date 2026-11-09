@@ -1,6 +1,6 @@
 # Market Advisor CM
 
-Plateforme SaaS intelligente de veille et d'alertes sur les appels d'offres publics camerounais (ARMP, COLEPS, DGTCFM, ministères, mairies, FEICOM et bailleurs internationaux).
+Plateforme SaaS intelligente de veille et d'alertes sur les appels d'offres publics camerounais (ARMP, COLEPS, ministères, mairies, FEICOM et bailleurs internationaux).
 
 ---
 
