@@ -26,10 +26,8 @@ export function useCycleAvis({
     return true;
   });
 
-  // 2. Retenir les 5 avis au meilleur score de pertinence
-  const top5Avis = [...avisFiltres]
-    .sort((a, b) => b.scoreIa - a.scoreIa)
-    .slice(0, 5);
+  // 2. Retenir les 5 premiers avis dans l'ordre reçu du serveur (plus récents d'abord)
+  const top5Avis = avisFiltres.slice(0, 5);
 
   const [selectedId, setSelectedId] = useState<string | null>(() => {
     return top5Avis.length > 0 ? top5Avis[0].id : null;

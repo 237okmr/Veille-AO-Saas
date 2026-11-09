@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Building2, MapPin, Sparkles } from 'lucide-react';
+import { Building2, MapPin } from 'lucide-react';
 import { AvisRadar } from '../../types/radar';
 import { useLangue } from '../../context/LangueContext';
 import { formatterDateLimite, formatterMontant } from '../../i18n/accueil';
@@ -44,12 +44,6 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
       : avis.procedure === 'AMI'
       ? t('procAMI')
       : t('procAOI');
-
-  // Formatage du score de pertinence
-  const scoreFormate =
-    langue === 'fr'
-      ? `${avis.scoreIa.toFixed(1).replace('.', ',')}/5`
-      : `${avis.scoreIa.toFixed(1)}/5`;
 
   // Formatage du montant si renseigné
   const hasMontantNumerique = avis.montantFcfa !== null && avis.montantFcfa > 0;
@@ -98,7 +92,7 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
           className="w-full bg-white/95 backdrop-blur-[12px] border border-ligne/80 rounded-carte shadow-hud p-3 sm:p-4 relative z-20 overflow-visible text-encre"
         >
           {/* ================================================================ */}
-          {/* 1. LIGNE HAUTE : Source + Procédure (gauche) & Score (droite)     */}
+          {/* 1. LIGNE HAUTE : Source + Procédure (aucun score sur le radar public) */}
           {/* ================================================================ */}
           <div className="flex items-center justify-between gap-1.5 mb-2.5">
             {/* Gauche : Source & Procédure */}
@@ -123,17 +117,6 @@ export const AnnonceCard: React.FC<AnnonceCardProps> = ({ avis }) => {
                 {avis.procedure}
               </span>
             </div>
-
-            {/* Droite : Badge Score de pertinence (rebond désactivé si mouvement réduit) */}
-            <motion.div
-              initial={shouldReduceMotion ? { scale: 1 } : { scale: 0.96 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: shouldReduceMotion ? 0 : 0.3, ease: 'easeOut' }}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-ok-fond text-ok font-extrabold text-[10px] sm:text-[11px] shrink-0"
-            >
-              <Sparkles className="w-2.5 h-2.5 text-ok shrink-0" aria-hidden="true" />
-              <span>{`${t('scoreIa')} ${scoreFormate}`}</span>
-            </motion.div>
           </div>
 
           {/* ================================================================ */}
