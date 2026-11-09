@@ -1,7 +1,7 @@
-// >>> FICHIER : SaaS_24_DemandesPilote.gs <<< (nouveau fichier : créer un onglet du même nom dans Apps Script)
+// >>> FICHIER : SaaS_24_DemandesPilote.gs <<< (à coller dans l'onglet du même nom)
 /**
  * ============================================================================
- * SAAS — DEMANDES D'ACCÈS PILOTE (V1.0 — LOT PIL1)
+ * SAAS — DEMANDES D'ACCÈS PILOTE (V1.1 — LOT PIL2 : confirmation au prospect)
  * ============================================================================
  * Route publique POST /public/pilote : enregistre la demande d'une entreprise
  * dans l'onglet DEMANDES_PILOTE (append-only, jamais de suppression de ligne)
@@ -15,6 +15,8 @@
  *   - Heure de la demande : Africa/Douala (UTC+1), via saasDateMaintenant().
  *   - Cellules neutralisées contre l'injection de formule (saasNeutraliserCellule).
  *   - E-mail à l'admin : adresse lue dans PARAMETRES!H2 (comme les alertes de sécurité).
+ *   - E-mail de confirmation au prospect (une seule fois par adresse : le dédoublonnage
+ *     empêche tout renvoi), état noté dans la colonne Confirmation_Prospect.
  *   - Protection : champ piège « siteWeb », plafond global de 40 demandes/heure,
  *     verrou d'écriture, quota Gmail contrôlé avant l'envoi.
  *
@@ -40,7 +42,8 @@ const SAAS_PILOTE_COLONNES = [
   { nom: "Statut",             largeur: 110 },
   { nom: "IP",                 largeur: 120 },
   { nom: "Notification_Admin", largeur: 140 },
-  { nom: "Notes_Admin",        largeur: 260 }
+  { nom: "Notes_Admin",        largeur: 260 },
+  { nom: "Confirmation_Prospect", largeur: 170 }
 ];
 
 // ---------------------------------------------------------------------------
@@ -54,6 +57,22 @@ const SAAS_PILOTE_COLONNES = [
 function saasPiloteInitialiserOnglet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   Logger.log(saasCreerFeuilleSiAbsente(ss, SAAS_SHEET_DEMANDES_PILOTE, SAAS_PILOTE_COLONNES));
+}
+
+/**
+ * 📄 SaaS_24_DemandesPilote.gs — saasPiloteAjouterColonneConfirmation()
+ * LOT PIL2 : ajoute l'en-tête Confirmation_Prospect (colonne K) à l'onglet existant, sans toucher aux lignes.
+ * À exécuter une seule fois. Sans effet si l'en-tête est déjà là.
+ */
+function saasPiloteAjouterColonneConfirmation() {
+  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SAAS_SHEET_DEMANDES_PILOTE);
+  if (!feuille) { Logger.log("❌ Onglet DEMANDES_PILOTE absent : exécuter saasPiloteInitialiserOnglet()."); return; }
+  const cellule = feuille.getRange(1, 11);
+  if (String(cellule.getValue() || "").trim() === "Confirmation_Prospect") { Logger.log("Colonne Confirmation_Prospect déjà présente."); return; }
+  if (String(cellule.getValue() || "").trim() !== "") { Logger.log("⚠ La cellule K1 contient déjà autre chose : rien modifié."); return; }
+  cellule.setValue("Confirmation_Prospect").setFontWeight("bold").setBackground("#0f172a").setFontColor("#ffffff");
+  feuille.setColumnWidth(11, 170);
+  Logger.log("✅ Colonne Confirmation_Prospect ajoutée en K1.");
 }
 
 // ---------------------------------------------------------------------------
@@ -168,6 +187,10 @@ function saasPiloteDemande(payload, e) {
   const statutMail = saasPiloteNotifierAdmin(idDemande, d);
   try { feuille.getRange(ligne, 9).setValue(statutMail); } catch (errStatut) {}
 
+  // 7. Confirmation au prospect (jamais bloquante : la demande est déjà enregistrée)
+  const statutProspect = saasPiloteConfirmerProspect(d);
+  try { feuille.getRange(ligne, 11).setValue(statutProspect); } catch (errStatut2) {}
+
   return saasReponse(true, null, "Demande enregistrée.", 201);
 }
 
@@ -217,6 +240,42 @@ function saasPiloteNotifierAdmin(idDemande, d) {
   }
 }
 
+/**
+ * Texte de la confirmation envoyée au prospect (fonction pure, testable sans effet).
+ * @return {Object} { sujet, texte, html }
+ */
+function saasPiloteTexteConfirmation(d) {
+  const sujet = "Market Advisor CM : votre demande d'accès pilote est bien reçue";
+  const texte =
+    "Bonjour " + d.nom + ",\n\n" +
+    "Nous avons bien reçu votre demande d'accès pilote pour " + d.entreprise + ". Merci de votre confiance.\n\n" +
+    "Nous la lisons personnellement et nous vous répondons sous 48 heures ouvrées, à cette adresse. " +
+    "Pour calibrer votre veille, tenez prêts votre activité précise (secteur indiqué : " + d.secteur + "), " +
+    "les régions qui vous intéressent et la fourchette de montants visée.\n\n" +
+    "Si vous n'avez rien reçu d'ici là, répondez simplement à ce message.\n\n" +
+    "L'équipe Market Advisor CM";
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#0f172a;line-height:1.5">' +
+    texte.split("\n\n").map(function (par) { return "<p>" + saasPiloteEchapper(par) + "</p>"; }).join("") + "</div>";
+  return { sujet: sujet, texte: texte, html: html };
+}
+
+/**
+ * Envoie la confirmation au prospect.
+ * @return {string} "ENVOYÉ" | "ÉCHEC" | "QUOTA" | "ADRESSE_INVALIDE"
+ */
+function saasPiloteConfirmerProspect(d) {
+  try {
+    if (!saasEmailValide(d.email)) return "ADRESSE_INVALIDE";
+    if (MailApp.getRemainingDailyQuota() < SAAS_PILOTE_QUOTA_MINIMUM) return "QUOTA";
+    const m = saasPiloteTexteConfirmation(d);
+    GmailApp.sendEmail(d.email, m.sujet, m.texte, { htmlBody: m.html, name: "Market Advisor CM" });
+    return "ENVOYÉ";
+  } catch (err) {
+    Logger.log("[PILOTE] Échec confirmation prospect : " + err.message);
+    return "ÉCHEC";
+  }
+}
+
 // ---------------------------------------------------------------------------
 // TEST (aucune écriture dans les feuilles, aucun e-mail)
 // ---------------------------------------------------------------------------
@@ -251,6 +310,11 @@ function saasPiloteTester() {
   const emailAdmin = params ? String(params.getRange("H2").getValue() || "").trim() : "";
   verifier("9. Destinataire admin (PARAMETRES!H2) valide", saasEmailValide(emailAdmin));
   verifier("10. Quota Gmail suffisant", MailApp.getRemainingDailyQuota() >= SAAS_PILOTE_QUOTA_MINIMUM, "restant : " + MailApp.getRemainingDailyQuota());
+
+  const conf = saasPiloteTexteConfirmation({ nom: "<b>Awa</b>", entreprise: "BTP & Co", email: "a@b.cm", secteur: "BTP" });
+  verifier("11. Texte de confirmation : nom et entreprise présents", conf.texte.indexOf("<b>Awa</b>") !== -1 && conf.texte.indexOf("BTP & Co") !== -1);
+  verifier("12. Version HTML : balises du visiteur neutralisées", conf.html.indexOf("<b>Awa</b>") === -1 && conf.html.indexOf("&lt;b&gt;Awa&lt;/b&gt;") !== -1);
+  verifier("13. Colonne Confirmation_Prospect présente (K1)", !!feuille && String(feuille.getRange(1, 11).getValue()).trim() === "Confirmation_Prospect", "sinon exécuter saasPiloteAjouterColonneConfirmation()");
 
   Logger.log(echecs === 0 ? "🟢 Tous les contrôles sont passés." : "🔴 " + echecs + " contrôle(s) en échec.");
 }
