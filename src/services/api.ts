@@ -154,6 +154,13 @@ export const api = {
       body: JSON.stringify({ route: '/auth/register', ...payload })
     }),
 
+  // DEMANDE D'ACCÈS PILOTE (route publique, sans connexion)
+  envoyerDemandePilote: (payload: { nom: string; entreprise: string; email: string; secteur: string; siteWeb?: string }) =>
+    request<null>('/public/pilote', {
+      method: 'POST',
+      body: JSON.stringify({ route: '/public/pilote', ...payload })
+    }),
+
   verify: (tokenParam?: string) => {
     return request<User>('/auth/verify', tokenParam ? { token: tokenParam } : {});
   },

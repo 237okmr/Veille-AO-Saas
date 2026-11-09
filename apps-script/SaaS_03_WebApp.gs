@@ -12,7 +12,7 @@
  *   3. Qui a accès : Tout le monde (ou Tout le monde avec compte Google)
  *   4. Copier l'URL /exec → à donner au frontend
  *
- * ROUTES PUBLIQUES (sans connexion) : /ping, /auth/login, /auth/verify, /public/radar-ticker.
+ * ROUTES PUBLIQUES (sans connexion) : /ping, /auth/login, /auth/verify, /public/radar-ticker, /public/pilote.
  *
  * CONVENTIONS D'URL :
  *   GET  {url}?route=/auth/verify&token=xxx
@@ -23,7 +23,7 @@
 // Identifiant de version du code (visible via ?route=/ping) : permet de vérifier que le
 // DÉPLOIEMENT WEB exécute bien la dernière version du code (le déploiement ne suit pas
 // l'éditeur : il faut publier une nouvelle version après chaque modification).
-const SAAS_BUILD = "2026-10-01-AV1";
+const SAAS_BUILD = "2026-11-09-PIL1";
 
 // ============================================================================
 // LOT S5a — CLÉ DU PROXY (secret partagé entre le proxy et cette application web)
@@ -170,6 +170,12 @@ function saasRouter(methode, route, payload, e) {
   // (SaaS_23_AvisCollectes.gs). Reste soumis au contrôle de la clé du proxy (doGet / doPost).
   if (r === "/public/radar-ticker" && methode === "GET") {
     return saasPublicRadarTicker(payload, e);
+  }
+
+  // Demande d'accès pilote : enregistrée dans DEMANDES_PILOTE + e-mail à l'admin (SaaS_24_DemandesPilote.gs).
+  // Soumise au contrôle de la clé du proxy (doGet / doPost) comme toutes les routes.
+  if (r === "/public/pilote" && methode === "POST") {
+    return saasPiloteDemande(payload, e);
   }
 
   if (r === "/auth/register" && methode === "POST") {

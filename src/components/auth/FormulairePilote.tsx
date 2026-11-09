@@ -1,21 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, ArrowRight, RotateCcw } from 'lucide-react';
 import { useLangue } from '../../context/LangueContext';
-
-/**
- * Envoie une demande d'accès pilote.
- * TODO : branchement réel à valider (route Apps Script dédiée)
- */
-export async function envoyerDemandePilote(payload: {
-  nom: string;
-  entreprise: string;
-  email: string;
-  secteur: string;
-}): Promise<{ succes: boolean; message?: string }> {
-  // Simulation de l'envoi réseau sans persistance locale
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return { succes: true };
-}
+import { api } from '../../services/api';
 
 interface FormulairePiloteProps {
   firstInputRef?: React.RefObject<HTMLInputElement | null>;
@@ -39,6 +25,9 @@ export const FormulairePilote: React.FC<FormulairePiloteProps> = ({ firstInputRe
   const [loading, setLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [erreurEnvoi, setErreurEnvoi] = useState('');
+  // Champ piège invisible : un humain ne le remplit jamais, un robot si.
+  const [piege, setPiege] = useState('');
 
   const localNomRef = useRef<HTMLInputElement>(null);
   const entrepriseRef = useRef<HTMLInputElement>(null);
@@ -112,17 +101,22 @@ export const FormulairePilote: React.FC<FormulairePiloteProps> = ({ firstInputRe
     }
 
     setLoading(true);
+    setErreurEnvoi('');
     try {
-      await envoyerDemandePilote({
+      await api.envoyerDemandePilote({
         nom: nom.trim(),
         entreprise: entreprise.trim(),
         email: email.trim(),
-        secteur: secteur.trim()
+        secteur: secteur.trim(),
+        siteWeb: piege
       });
       setSubmittedEmail(email.trim());
       setIsSubmitted(true);
-    } catch {
-      // En cas d'erreur de traitement
+    } catch (err: any) {
+      // Aucune fausse confirmation : l'échec est montré et le formulaire reste rempli.
+      setErreurEnvoi(
+        err?.message || "Votre demande n'a pas pu être envoyée. Réessayez dans un instant."
+      );
     } finally {
       setLoading(false);
     }
@@ -134,6 +128,8 @@ export const FormulairePilote: React.FC<FormulairePiloteProps> = ({ firstInputRe
     setEmail('');
     setSecteur('');
     setErreurs({});
+    setErreurEnvoi('');
+    setPiege('');
     setIsSubmitted(false);
     setSubmittedEmail('');
     setTimeout(() => {
@@ -312,6 +308,26 @@ export const FormulairePilote: React.FC<FormulairePiloteProps> = ({ firstInputRe
             </p>
           )}
         </div>
+
+        {/* Champ piège anti-robot (hors écran, ignoré des lecteurs d'écran et du clavier) */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
+          <label htmlFor="champ-siteweb-pilote">Ne pas remplir</label>
+          <input
+            id="champ-siteweb-pilote"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={piege}
+            onChange={(e) => setPiege(e.target.value)}
+          />
+        </div>
+
+        {/* Échec d'envoi : message honnête, annoncé aux lecteurs d'écran */}
+        {erreurEnvoi && (
+          <p role="alert" className="text-[0.8125rem] text-erreur mb-3 font-medium">
+            {erreurEnvoi}
+          </p>
+        )}
 
         {/* Bouton d'envoi pleine largeur */}
         <button

@@ -81,7 +81,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ============================================================================
 // RATE LIMITING EN MÉMOIRE PAR ADRESSE IP (Sans dépendance externe)
-// - /api/auth/login et connexion par lien (/api/auth/lien) : 10 requêtes / minute
+// - /api/auth/login, connexion par lien (/api/auth/lien) et demande pilote (/api/public/pilote) : 10 requêtes / minute
 // - /api/public/radar-ticker : 30 requêtes / minute
 // - Reste de /api/* : 120 requêtes / minute
 // Dépassement -> HTTP 429 + Retry-After + message en français
@@ -117,7 +117,7 @@ function getRouteCategory(req: Request): 'auth' | 'radar' | 'api' {
   const bodyRoute = (req.body && typeof req.body === 'object' && req.body.route) ? String(req.body.route) : '';
   const fullContext = `${rawPath} ${queryRoute} ${bodyRoute}`;
 
-  if (fullContext.includes('/auth/login') || fullContext.includes('/auth/lien')) {
+  if (fullContext.includes('/auth/login') || fullContext.includes('/auth/lien') || fullContext.includes('/public/pilote')) {
     return 'auth';
   }
   if (rawPath.startsWith('/public/radar-ticker') || rawPath.startsWith('/api/public/radar-ticker') || queryRoute.includes('/public/radar-ticker')) {
