@@ -8,6 +8,7 @@ import { ClientProfile } from '../client/ClientProfile';
 import { ClientPreferences } from '../client/ClientPreferences';
 import { ClientDeadlines } from '../client/ClientDeadlines';
 import { ClientAccount } from '../client/ClientAccount';
+import { BandeauxCompte } from '../client/BandeauxCompte';
 import { AdminDashboard } from '../admin/AdminDashboard';
 import { AdminClients } from '../admin/AdminClients';
 import { AdminAvis } from '../admin/AdminAvis';
@@ -185,6 +186,7 @@ export const AppLayout: React.FC = () => {
 
           {/* Page View Viewport */}
           <main className="flex-1 overflow-y-auto pb-16">
+            {!isAdmin && <BandeauxCompte vue={currentView} onNavigate={handleNavigate} />}
             {renderCurrentView()}
           </main>
         </div>

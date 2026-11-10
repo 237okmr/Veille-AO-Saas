@@ -544,3 +544,10 @@ export const CAMEROON_PROCEDURES = [
   { code: 'ASMI', label: "Appel à Sollicitation de Manifestation d'Intérêt (ASMI)" },
   { code: 'GG', label: "Gré à Gré (GG)" }
 ] as const;
+
+
+export interface EtatCompte {
+  aMotDePasse: boolean;
+  pilote: { estPilote: boolean; finEssai: string; joursRestants: number | null };
+  profilIncomplet: boolean;
+}

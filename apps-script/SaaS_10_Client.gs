@@ -248,6 +248,8 @@ function saasRouterClient(r, methode, payload, user, e) {
   // --- Compte ---
   if (route === "/account/update" && methode === "POST")   return saasClientUpdateAccount(payload, user, e);
   if (route === "/account/password" && methode === "POST") return saasClientChangePassword(payload, user, e);
+  if (route === "/account/etat" && methode === "GET") return saasClientEtatCompte(user, e);
+  if (route === "/account/mot-de-passe-initial" && methode === "POST") return saasClientDefinirMotDePasse(payload, user, e);
 
   // --- Fraîcheur des sources (chantier D) ---
   if (route === "/sources" && methode === "GET") return saasClientGetSources(user, e);

@@ -23,7 +23,7 @@
 // Identifiant de version du code (visible via ?route=/ping) : permet de vérifier que le
 // DÉPLOIEMENT WEB exécute bien la dernière version du code (le déploiement ne suit pas
 // l'éditeur : il faut publier une nouvelle version après chaque modification).
-const SAAS_BUILD = "2026-11-10-PIL3";
+const SAAS_BUILD = "2026-11-10-PIL5";
 
 // ============================================================================
 // LOT S5a — CLÉ DU PROXY (secret partagé entre le proxy et cette application web)

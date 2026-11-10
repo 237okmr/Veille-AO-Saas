@@ -30,7 +30,8 @@ import {
   FacetteAvis,
   AdminAvisFacettes,
   AdminAvisParams,
-  AdminAvisResponse
+  AdminAvisResponse,
+  EtatCompte
 } from '../types';
 
 const TOKEN_KEY = 'cam_marches_token';
@@ -222,6 +223,17 @@ export const api = {
     request<null>('/client/account/password', {
       method: 'POST',
       body: JSON.stringify(payload)
+    }),
+
+  // État du compte (mot de passe défini ? essai pilote ? profil à compléter ?)
+  getEtatCompte: () =>
+    request<EtatCompte>('/client/account/etat'),
+
+  // Premier mot de passe d'un compte ouvert sans mot de passe (espace pilote).
+  definirMotDePasseInitial: (nouveauMotDePasse: string) =>
+    request<{ aMotDePasse: boolean }>('/client/account/mot-de-passe-initial', {
+      method: 'POST',
+      body: JSON.stringify({ nouveauMotDePasse })
     }),
 
   // CLIENT ALERTS

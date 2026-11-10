@@ -206,6 +206,7 @@ function eeConstruireCorpsEmail(p) {
         ${p.blocResume}
         ${p.cartesHtml}
         ${p.noteAutres}
+        ${p.blocLien || ""}
       </div>
       ${eeConstruirePiedEnv(p.env, p.emailReplyTo)}
     </div>`;
@@ -383,6 +384,8 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
   // Détection environnement (TEST / PRODUCTION)
   const env = eeDetecterEnvironnement();
   Logger.log(`[ENVOI] Environnement détecté : ${env.libelle} (fichier : "${env.nomFichier}")`);
+
+  eeEtatLiens(); // LOT LC1/PIL5 : état des liens de connexion, dans le journal (lecture seule)
 
   const prefixeSujet = env.estTest ? "[TEST] " : "";
   const bandeauEnv = eeConstruireBandeauEnv(env);
@@ -564,6 +567,9 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
          </p>`
       : "";
 
+    // ---- LOT PIL5 : lien de connexion à usage unique (une seule adresse, compte CLIENT du bon client) ----
+    const lienConnexion = simulation ? null : eeEmettreLienPourGroupe(groupe.clientId, adressesDestinataires);
+
     const corpsComplet = eeConstruireCorpsEmail({
       clientNom: groupe.clientNom,
       nbTop: topDossiers.length,
@@ -572,6 +578,7 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
       blocResume: blocResume,
       cartesHtml: cartesHtml,
       noteAutres: noteAutres,
+      blocLien: eeConstruireBlocLien(lienConnexion),
       env: env,
       emailReplyTo: emailReplyTo
     });
@@ -608,6 +615,7 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
       }
     }
 
+    eeFinaliserLien(lienConnexion, envoyeOk); // ENVOYE si l'e-mail est parti, ANNULE sinon
     if (!envoyeOk) continue; // les alertes restent EN_ATTENTE / REPORTÉ
 
     // ---- ÉTAPE B : statuts écrits IMMÉDIATEMENT (une seule tentative de reprise) ----
