@@ -904,6 +904,38 @@ function saasAdminReglagesProxyMode(payload, user, e) {
 }
 
 /**
+ * 📄 LOT 3 — Historique des réglages (ajout, aucune écriture).
+ * Texte d'une valeur de PARAMETRES pour le journal d'audit : les heures (objets Date) sont
+ * rendues en "HH:mm" fuseau Africa/Douala ; tout le reste en texte simple.
+ */
+function saasReglagesValeurTexte_(cle, valeur) {
+  if (valeur === null || valeur === undefined) return "";
+  if (Object.prototype.toString.call(valeur) === "[object Date]") {
+    return Utilities.formatDate(valeur, "Africa/Douala", "HH:mm");
+  }
+  return String(valeur);
+}
+
+/**
+ * 📄 LOT 3 — Fabrique la colonne Details d'un événement ADMIN_REGLAGES_PARAMETRES_UPDATE.
+ * Format : champs=Cle1,Cle2 | avant/apres={"Cle1":["ancienne","nouvelle"]}
+ * Les clés API ne passent jamais ici (elles sont refusées par la liste blanche).
+ * La colonne est limitée à 500 caractères : si le JSON ne tient pas, on ne garde que les noms
+ * de champs (l'historique reste lisible, sans bouton de rétablissement).
+ * Fonction pure : aucune lecture ni écriture de feuille.
+ */
+function saasReglagesConstruireDetailsAudit_(changements, refuses) {
+  const cles = Object.keys(changements || {});
+  const finRefus = (refuses && refuses.length) ? " refuses=" + refuses.join(",") : "";
+  const debut = "champs=" + cles.join(",");
+  if (cles.length === 0) return (debut + finRefus).substring(0, 500);
+  const json = JSON.stringify(changements);
+  const complet = debut + " | avant/apres=" + json + finRefus;
+  if (complet.length <= 500) return complet;
+  return (debut + finRefus).substring(0, 500);
+}
+
+/**
  * 📄 SaaS_20_Admin.gs — saasAdminReglagesUpdateParametres(payload, user, e)
  * POST /admin/reglages/parametres
  * Body : un ou plusieurs champs de SAAS_REGLAGES_PARAMS_AUTORISES.
@@ -920,12 +952,14 @@ function saasAdminReglagesUpdateParametres(payload, user, e) {
 
   const modif = [];
   const refuses = [];
+  const changements = {}; // LOT 3 : { Cle: [ancienneValeur, nouvelleValeur] } pour le journal d'audit
 
   Object.keys(p).forEach(function (cle) {
     if (SAAS_REGLAGES_PARAMS_AUTORISES.indexOf(cle) === -1) { refuses.push(cle); return; }
     if (parLigne[cle] === undefined) { refuses.push(cle + " (absent de PARAMETRES)"); return; }
 
     let valeur = p[cle];
+    let apresTexte = saasReglagesValeurTexte_(cle, valeur); // LOT 3
 
     if (SAAS_REGLAGES_PARAMS_HEURES.indexOf(cle) !== -1) {
       const val = String(valeur || "").trim();
@@ -933,15 +967,20 @@ function saasAdminReglagesUpdateParametres(payload, user, e) {
         refuses.push(cle + " (format attendu HH:mm)");
         return;
       }
+      apresTexte = val;
       valeur = Utilities.parseDate("1899-12-30 " + val + ":00", "Africa/Douala", "yyyy-MM-dd HH:mm:ss");
     }
 
+    // LOT 3 : ancienne valeur lue AVANT l'écriture (colonne H)
+    const avantTexte = saasReglagesValeurTexte_(cle, donnees.feuille.getRange(parLigne[cle], 8).getValue());
+
     donnees.feuille.getRange(parLigne[cle], 8).setValue(secNeutraliserFormule(valeur)); // colonne H
     modif.push(cle);
+    changements[cle] = [avantTexte, apresTexte];
   });
 
   saasLogger(user.idUser, user.email, user.role, "ADMIN_REGLAGES_PARAMETRES_UPDATE",
-    "champs=" + modif.join(",") + (refuses.length ? " refuses=" + refuses.join(",") : ""),
+    saasReglagesConstruireDetailsAudit_(changements, refuses),
     saasExtraireIp(e), true);
 
   return saasReponse(true, { modifie: modif, refuses: refuses }, "Paramètres mis à jour.", 200);
@@ -1075,6 +1114,37 @@ function saasTesterReglagesA2() {
   Logger.log("2) clesApi.Cle_API_IA / Cle_API_IA_DeepSeek montrent les mêmes comptes/masques qu'au test A1 (lues via le coffre).");
   Logger.log("3) Les 3 tentatives d'écriture ci-dessus sont TOUTES refusées : aucune clé ni heure de production n'a changé.");
   Logger.log("=================================================");
+}
+
+/**
+ * TEST DU LOT 3 — SANS ÉCRITURE, SANS E-MAIL.
+ * Vérifie uniquement les deux fonctions pures du journal des réglages :
+ * aucune feuille n'est lue ni modifiée, aucun réglage n'est changé.
+ */
+function saasTesterReglagesLot3SansEcriture() {
+  Logger.log("=== TEST LOT 3 : HISTORIQUE DES RÉGLAGES (sans écriture) ===");
+
+  const t1 = saasReglagesValeurTexte_("Seuil_Score_Pertinence_Min", 3);
+  Logger.log("1. Nombre 3 -> '" + t1 + "'  attendu : '3'");
+
+  // Date récente : les dates de 1899 (cellules « heure ») ont un décalage historique qui fausse un test synthétique.
+  const heure = Utilities.parseDate("2026-01-01 06:00:00", "Africa/Douala", "yyyy-MM-dd HH:mm:ss");
+  const t2 = saasReglagesValeurTexte_("Heure_Collecte_Nuit", heure);
+  Logger.log("2. Heure 06:00 -> '" + t2 + "'  attendu : '06:00'");
+
+  const d1 = saasReglagesConstruireDetailsAudit_({ Seuil_Score_Pertinence_Min: ["3", "4"] }, []);
+  Logger.log("3. Un champ -> " + d1);
+  Logger.log("   attendu : champs=Seuil_Score_Pertinence_Min | avant/apres={\"Seuil_Score_Pertinence_Min\":[\"3\",\"4\"]}");
+
+  const gros = {};
+  for (let i = 0; i < 12; i++) gros["Champ_" + i] = ["a".repeat(40), "b".repeat(40)];
+  const d2 = saasReglagesConstruireDetailsAudit_(gros, []);
+  Logger.log("4. Texte trop long -> longueur " + d2.length + ", contient avant/apres : " + (d2.indexOf("avant/apres=") !== -1) + "  attendu : <= 500 et false");
+
+  const d3 = saasReglagesConstruireDetailsAudit_({}, ["Cle_API_IA"]);
+  Logger.log("5. Rien d'accepté + refus -> " + d3 + "  attendu : champs= refuses=Cle_API_IA");
+
+  Logger.log("Aucune écriture effectuée.");
 }
 
 // ============================================================================
