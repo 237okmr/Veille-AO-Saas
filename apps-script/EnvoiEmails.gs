@@ -223,6 +223,67 @@ function extraireAdressesEmails(chaineEmails) {
     .filter(e => e.length > 0 && e.includes("@"));
 }
 
+/**
+ * LOT PIL6 — répartit les adresses d'un client en e-mails distincts.
+ *  · Liens de connexion désactivés (SAAS_LIEN_ACTIF ≠ OUI) : un seul e-mail groupé, comme avant.
+ *  · Sinon : un e-mail PAR personne ayant un compte CLIENT actif rattaché à ce client (avec son lien),
+ *    un e-mail groupé SANS lien pour les adresses sans compte, un e-mail à part SANS lien pour les ADMIN.
+ * Lecture seule : n'écrit rien, n'envoie rien, n'émet aucun lien.
+ * @return {Array<{adresses:string[], avecLien:boolean, type:string}>}
+ */
+function eeConstruirePlanEnvoi(idClient, adresses) {
+  const liste = adresses || [];
+  if (liste.length === 0) return [];
+  if (!eeLiensActifs()) return [{ adresses: liste, avecLien: false, type: "GROUPÉ (liens désactivés)" }];
+
+  const individuels = [], sansCompte = [], admins = [], vus = {};
+  liste.forEach(function (a) {
+    const cle = String(a).trim().toLowerCase();
+    if (!cle || vus[cle]) return;
+    vus[cle] = true;
+    let user = null;
+    try { user = saasTrouverUtilisateurParEmail(a); } catch (e) { user = null; }
+    if (user && String(user.role || "").toUpperCase() === "ADMIN") admins.push(a);
+    else if (user && String(user.idClient) === String(idClient) && saasLienDestinataireEligible(user).ok) individuels.push(a);
+    else sansCompte.push(a);
+  });
+
+  const plan = individuels.map(function (a) { return { adresses: [a], avecLien: true, type: "INDIVIDUEL AVEC LIEN" }; });
+  if (sansCompte.length > 0) plan.push({ adresses: sansCompte, avecLien: false, type: "GROUPÉ SANS LIEN" });
+  if (admins.length > 0) plan.push({ adresses: admins, avecLien: false, type: "ADMIN SANS LIEN" });
+  return plan;
+}
+
+/**
+ * TEST LOT PIL6 — lecture seule : aucun e-mail, aucune écriture, aucun lien émis, aucun appel IA.
+ * À exécuter depuis EnvoiEmails.gs : eeTesterPlanEnvoi
+ * Affiche, pour chaque client actif, les e-mails qui partiraient demain matin.
+ */
+function eeTesterPlanEnvoi() {
+  Logger.log("=== TEST PIL6 : PLAN D'ENVOI PAR CLIENT (lecture seule) ===");
+  const etat = eeEtatLiens();
+  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("CLIENTS");
+  if (!feuille) { Logger.log("❌ Onglet CLIENTS introuvable."); return; }
+  const data = feuille.getDataRange().getValues();
+  const h = data[0].map(function (x) { return String(x).trim().toUpperCase(); });
+  const iId = h.indexOf("ID_CLIENT"), iNom = h.indexOf("NOM_ENTREPRISE"), iMail = h.indexOf("EMAIL_DESTINATAIRE"), iActif = h.indexOf("ACTIF");
+  if (iId < 0 || iMail < 0) { Logger.log("❌ Colonnes ID_Client / Email_Destinataire introuvables."); return; }
+  let totalEmails = 0, anomalies = 0;
+  for (let i = 1; i < data.length; i++) {
+    if (iActif >= 0 && String(data[i][iActif]).trim().toUpperCase() !== "OUI") continue;
+    const adresses = extraireAdressesEmails(data[i][iMail]);
+    const plan = eeConstruirePlanEnvoi(String(data[i][iId]).trim(), adresses);
+    Logger.log("• " + data[i][iNom] + " (" + data[i][iId] + ") : " + adresses.length + " adresse(s) → " + plan.length + " e-mail(s)");
+    plan.forEach(function (p) { Logger.log("    - " + p.type + " : " + p.adresses.join(", ")); });
+    totalEmails += plan.length;
+    const nbLiens = plan.filter(function (p) { return p.avecLien; }).length;
+    if (etat.interrupteur === "OUI" && etat.onglet && nbLiens === 0) { anomalies++; Logger.log("    ⚠️ Aucun destinataire de ce client n'aura de lien."); }
+    plan.forEach(function (p) { if (p.avecLien && p.adresses.length !== 1) { anomalies++; Logger.log("    ❌ Un lien serait placé dans un e-mail à plusieurs adresses."); } });
+  }
+  Logger.log("Total : " + totalEmails + " e-mail(s) par jour pour l'ensemble des clients actifs | quota Gmail restant : " + MailApp.getRemainingDailyQuota());
+  Logger.log(anomalies === 0 ? "✅ Plan cohérent." : "⚠️ " + anomalies + " anomalie(s) à examiner avant mise en service.");
+}
+
 function verifierSiAvisExpire(dateLimiteStr) {
   if (!dateLimiteStr) return false;
   const str = dateLimiteStr.toString().trim();
@@ -567,56 +628,74 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
          </p>`
       : "";
 
-    // ---- LOT PIL5 : lien de connexion à usage unique (une seule adresse, compte CLIENT du bon client) ----
-    const lienConnexion = simulation ? null : eeEmettreLienPourGroupe(groupe.clientId, adressesDestinataires);
-
-    const corpsComplet = eeConstruireCorpsEmail({
-      clientNom: groupe.clientNom,
-      nbTop: topDossiers.length,
-      nbTotal: nbTotal,
-      bandeauEnv: bandeauEnv,
-      blocResume: blocResume,
-      cartesHtml: cartesHtml,
-      noteAutres: noteAutres,
-      blocLien: eeConstruireBlocLien(lienConnexion),
-      env: env,
-      emailReplyTo: emailReplyTo
-    });
-
+    // ---- LOT PIL6 : un e-mail par personne ayant un compte (lien direct), un e-mail groupé sans lien
+    //      pour les autres adresses, un e-mail à part pour l'administrateur. Liens désactivés : comportement d'origine.
     const sujet = `${prefixeSujet}[Veille Marchés] ${groupe.clientNom}: ${topDossiers.length} opportunité(s) qualifiée(s)`;
+    const planEnvoi = eeConstruirePlanEnvoi(groupe.clientId, adressesDestinataires);
 
-    // ---- Simulation : on s'arrête ici pour ce client ----
+    const construireCorps = function (lienConnexion) {
+      return eeConstruireCorpsEmail({
+        clientNom: groupe.clientNom,
+        nbTop: topDossiers.length,
+        nbTotal: nbTotal,
+        bandeauEnv: bandeauEnv,
+        blocResume: blocResume,
+        cartesHtml: cartesHtml,
+        noteAutres: noteAutres,
+        blocLien: eeConstruireBlocLien(lienConnexion),
+        env: env,
+        emailReplyTo: emailReplyTo
+      });
+    };
+
+    // ---- Simulation : on s'arrête ici pour ce client (aucun lien émis) ----
     if (simulation) {
-      totalSimules++;
-      Logger.log(`[SIMULATION] ${groupe.clientNom} → ${adressesDestinataires.join(", ")} : ${topDossiers.length} dossier(s) seraient envoyé(s), ${dossiersReportes.length} reporté(s). Sujet : "${sujet}"`);
+      planEnvoi.forEach(function (p) {
+        totalSimules++;
+        Logger.log(`[SIMULATION] ${groupe.clientNom} → ${p.adresses.join(", ")} (${p.type}) : ${topDossiers.length} dossier(s) seraient envoyé(s), ${dossiersReportes.length} reporté(s). Sujet : "${sujet}"`);
+      });
       continue;
     }
 
-    // ---- ÉTAPE A : envoi de l'e-mail ----
-    let envoyeOk = false;
-    try {
-      GmailApp.sendEmail(
-        adressesDestinataires.join(", "),
-        sujet,
-        "",
-        {
-          htmlBody: corpsComplet,
-          name: env.estTest ? "Veille Stratégique (TEST)" : "Veille Stratégique Cameroun",
-          replyTo: emailReplyTo
+    // ---- ÉTAPE A : envoi des e-mails du plan (le résumé IA et les cartes sont communs : aucun appel IA de plus) ----
+    let nbEnvoyesClient = 0;
+    const adressesEchec = [];
+    for (let k = 0; k < planEnvoi.length; k++) {
+      const envoi = planEnvoi[k];
+      if (arretQuota) { Array.prototype.push.apply(adressesEchec, envoi.adresses); continue; }
+
+      const lienConnexion = envoi.avecLien ? eeEmettreLienPourGroupe(groupe.clientId, envoi.adresses) : null;
+      let envoyeOk = false;
+      try {
+        GmailApp.sendEmail(
+          envoi.adresses.join(", "),
+          sujet,
+          "",
+          {
+            htmlBody: construireCorps(lienConnexion),
+            name: env.estTest ? "Veille Stratégique (TEST)" : "Veille Stratégique Cameroun",
+            replyTo: emailReplyTo
+          }
+        );
+        envoyeOk = true;
+        nbEnvoyesClient++;
+      } catch (e) {
+        Logger.log(`[ERREUR EMAIL] ${groupe.clientNom} → ${envoi.adresses.join(", ")} : ${e.message}`);
+        Array.prototype.push.apply(adressesEchec, envoi.adresses);
+        if (/quota|limit|too many|service invoked too many/i.test(String(e.message))) {
+          arretQuota = true;
+          Logger.log("[ENVOI] Limite Gmail atteinte : arrêt des envois restants (ils repartiront au prochain passage).");
         }
-      );
-      envoyeOk = true;
-    } catch (e) {
-      Logger.log(`[ERREUR EMAIL] ${groupe.clientNom} : ${e.message}`);
-      echecsEnvoi.push(groupe.clientNom + " (" + e.message + ")");
-      if (/quota|limit|too many|service invoked too many/i.test(String(e.message))) {
-        arretQuota = true;
-        Logger.log("[ENVOI] Limite Gmail atteinte : arrêt des envois restants (ils repartiront au prochain passage).");
       }
+      eeFinaliserLien(lienConnexion, envoyeOk); // ENVOYE si l'e-mail est parti, ANNULE sinon
     }
 
-    eeFinaliserLien(lienConnexion, envoyeOk); // ENVOYE si l'e-mail est parti, ANNULE sinon
-    if (!envoyeOk) continue; // les alertes restent EN_ATTENTE / REPORTÉ
+    // Aucun e-mail parti : les alertes restent EN_ATTENTE / REPORTÉ. Au moins un parti : statuts écrits
+    // (évite d'envoyer deux fois à ceux qui ont déjà reçu) et les adresses en échec sont signalées.
+    if (adressesEchec.length > 0) {
+      echecsEnvoi.push(groupe.clientNom + " (non reçu par : " + adressesEchec.join(", ") + ")");
+    }
+    if (nbEnvoyesClient === 0) continue;
 
     // ---- ÉTAPE B : statuts écrits IMMÉDIATEMENT (une seule tentative de reprise) ----
     const dateEnvoiStr = Utilities.formatDate(new Date(), "Africa/Douala", "yyyy-MM-dd HH:mm:ss");
@@ -640,12 +719,12 @@ function eeExecuterEnvoiInterne(metriques, simulation) {
       echecsStatut.push(groupe.clientNom + " (lignes " + lignesEnvoyees.join(",") + ")");
     }
 
-    totalEmailsEnvoyes++;
+    totalEmailsEnvoyes += nbEnvoyesClient;
     if (metriques && metriques.detailDistribution) {
       metriques.detailDistribution[groupe.clientNom] = topDossiers.length;
     }
 
-    Logger.log(`[ENVOI] ${groupe.clientNom} → ${adressesDestinataires.length} destinataire(s) : ${topDossiers.length} envoyé(s), ${dossiersReportes.length} reporté(s). Sujet : "${sujet}"`);
+    Logger.log(`[ENVOI] ${groupe.clientNom} → ${nbEnvoyesClient} e-mail(s) sur ${planEnvoi.length} (${adressesDestinataires.length} destinataire(s)) : ${topDossiers.length} envoyé(s), ${dossiersReportes.length} reporté(s). Sujet : "${sujet}"`);
   }
 
   // ------------------------------------------------------------------
