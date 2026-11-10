@@ -148,6 +148,13 @@ export const api = {
       body: JSON.stringify({ route: '/auth/lien', jeton })
     }),
 
+  // Confirmation du lien d'ouverture d'espace pilote reçu par e-mail (route publique).
+  confirmerPilote: (jeton: string) =>
+    request<User>('/public/pilote/confirmer', {
+      method: 'POST',
+      body: JSON.stringify({ route: '/public/pilote/confirmer', jeton })
+    }),
+
   register: (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }) =>
     request<User>('/auth/register', {
       method: 'POST',

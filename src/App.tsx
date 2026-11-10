@@ -21,6 +21,13 @@ const lireJetonAcces = (): string | null => {
   return m ? m[1].toLowerCase() : null;
 };
 
+// Lit le jeton du lien d'ouverture d'espace pilote : « /#confirmer=<64 caractères hexadécimaux> ».
+const lireJetonConfirmation = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const m = /^#confirmer=([0-9a-fA-F]{64})$/.exec(window.location.hash);
+  return m ? m[1].toLowerCase() : null;
+};
+
 const MainRouter: React.FC = () => {
   // TOUS les hooks sont déclarés au début du composant, avant tout retour conditionnel.
   const { user, loading } = useAuth();
@@ -28,6 +35,8 @@ const MainRouter: React.FC = () => {
 
   // Jeton du lien de connexion : gardé en mémoire seulement, jamais écrit dans localStorage.
   const [jetonAcces, setJetonAcces] = React.useState<string | null>(() => lireJetonAcces());
+
+  const [jetonConfirmation, setJetonConfirmation] = React.useState<string | null>(() => lireJetonConfirmation());
 
   const [pathname, setPathname] = React.useState(() => {
     if (typeof window !== 'undefined') {
@@ -38,7 +47,7 @@ const MainRouter: React.FC = () => {
 
   // Retire aussitôt le jeton de la barre d'adresse et de l'historique du navigateur.
   React.useEffect(() => {
-    if (/^#acces=/.test(window.location.hash)) {
+    if (/^#(acces|confirmer)=/.test(window.location.hash)) {
       window.history.replaceState({}, '', window.location.pathname + window.location.search);
     }
   }, []);
@@ -69,6 +78,22 @@ const MainRouter: React.FC = () => {
       setPathname(target);
     }
   }, [loading, user, pathname]);
+
+  // 1a. Lien d'ouverture d'espace pilote reçu par e-mail.
+  if (jetonConfirmation) {
+    return (
+      <AccesParLien
+        type="pilote"
+        jeton={jetonConfirmation}
+        onSucces={() => setJetonConfirmation(null)}
+        onEchec={(message) => {
+          setJetonConfirmation(null);
+          toast.warning('Lien non valide', message);
+        }}
+        onAnnuler={() => setJetonConfirmation(null)}
+      />
+    );
+  }
 
   // 1. Lien de connexion reçu par e-mail : l'écran de confirmation passe avant tout le reste.
   if (jetonAcces) {

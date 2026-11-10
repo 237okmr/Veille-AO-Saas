@@ -23,7 +23,7 @@
 // Identifiant de version du code (visible via ?route=/ping) : permet de vérifier que le
 // DÉPLOIEMENT WEB exécute bien la dernière version du code (le déploiement ne suit pas
 // l'éditeur : il faut publier une nouvelle version après chaque modification).
-const SAAS_BUILD = "2026-11-09-LC1";
+const SAAS_BUILD = "2026-11-10-PIL3";
 
 // ============================================================================
 // LOT S5a — CLÉ DU PROXY (secret partagé entre le proxy et cette application web)
@@ -176,6 +176,11 @@ function saasRouter(methode, route, payload, e) {
   // Soumise au contrôle de la clé du proxy (doGet / doPost) comme toutes les routes.
   if (r === "/public/pilote" && methode === "POST") {
     return saasPiloteDemande(payload, e);
+  }
+
+  // Confirmation du lien reçu par e-mail : crée l'espace pilote et connecte (SaaS_25_PiloteAuto.gs).
+  if (r === "/public/pilote/confirmer" && methode === "POST") {
+    return saasPiloteConfirmer(payload, e);
   }
 
   if (r === "/auth/register" && methode === "POST") {

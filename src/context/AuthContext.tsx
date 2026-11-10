@@ -10,6 +10,7 @@ interface AuthContextValue {
   apiConfig: ApiConfigInfo | null;
   login: (email: string, motDePasse: string) => Promise<User>;
   loginParLien: (jeton: string) => Promise<User>;
+  confirmerPilote: (jeton: string) => Promise<User>;
   register: (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -162,6 +163,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error(res.message || 'Ce lien a expiré ou a déjà été utilisé. Connectez-vous avec votre adresse e-mail et votre mot de passe.');
   };
 
+  // Confirmation du lien d'ouverture d'espace pilote : crée l'espace et connecte (même principe que loginParLien).
+  const confirmerPilote = async (jeton: string): Promise<User> => {
+    const res = await api.confirmerPilote(jeton);
+    if (res.succes === true && res.donnees && res.donnees.token) {
+      const authenticatedUser = res.donnees;
+      setToken(res.donnees.token);
+      setStoredUser(authenticatedUser);
+      setUser(authenticatedUser);
+      toast.success('Votre espace pilote est ouvert.', 'Bienvenue sur Market Advisor CM.');
+      window.history.pushState({}, '', '/client');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return authenticatedUser;
+    }
+    throw new Error(res.message || 'Ce lien n\'est plus valable. Refaites votre demande depuis la page d\'accueil.');
+  };
+
   const register = async (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }): Promise<User> => {
     setLoading(true);
     try {
@@ -210,6 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         apiConfig,
         login,
         loginParLien,
+        confirmerPilote,
         register,
         logout,
         refreshUser,

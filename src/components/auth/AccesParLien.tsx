@@ -14,15 +14,19 @@ interface AccesParLienProps {
   onEchec: (message: string) => void;
   /** Appelé quand la personne préfère se connecter avec son mot de passe. */
   onAnnuler: () => void;
+  /** 'alerte' : lien des e-mails d'alerte (défaut). 'pilote' : lien de confirmation d'une demande pilote. */
+  type?: 'alerte' | 'pilote';
 }
 
 export const AccesParLien: React.FC<AccesParLienProps> = ({
   jeton,
   onSucces,
   onEchec,
-  onAnnuler
+  onAnnuler,
+  type = 'alerte'
 }) => {
-  const { loginParLien } = useAuth();
+  const { loginParLien, confirmerPilote } = useAuth();
+  const estPilote = type === 'pilote';
   const [enCours, setEnCours] = useState(false);
 
   // Focus automatique au chargement sans faire défiler la page
@@ -37,13 +41,15 @@ export const AccesParLien: React.FC<AccesParLienProps> = ({
     if (enCours) return;
     setEnCours(true);
     try {
-      await loginParLien(jeton);
+      await (estPilote ? confirmerPilote(jeton) : loginParLien(jeton));
       onSucces();
     } catch (err: any) {
       setEnCours(false);
       onEchec(
         err?.message ||
-          'Ce lien a expiré ou a déjà été utilisé. Connectez-vous avec votre adresse e-mail et votre mot de passe.'
+          estPilote
+            ? "Ce lien n'est plus valable. Refaites votre demande depuis la page d'accueil."
+            : 'Ce lien a expiré ou a déjà été utilisé. Connectez-vous avec votre adresse e-mail et votre mot de passe.'
       );
     }
   };
@@ -73,10 +79,12 @@ export const AccesParLien: React.FC<AccesParLienProps> = ({
 
           <div className="space-y-2">
             <h1 className="font-titre font-[800] text-[1.5rem] text-encre leading-tight">
-              Accès à votre espace personnel
+              {estPilote ? 'Ouvrir votre espace pilote' : 'Accès à votre espace personnel'}
             </h1>
             <p className="text-[0.9375rem] text-discret leading-relaxed">
-              Vous avez ouvert le lien personnel reçu dans votre e-mail d'alerte. Cliquez ci-dessous pour retrouver toutes vos alertes, sans mot de passe.
+              {estPilote
+                ? "Votre adresse est presque confirmée. Cliquez ci-dessous : votre espace pilote est créé et vous y arrivez directement, sans mot de passe."
+                : "Vous avez ouvert le lien personnel reçu dans votre e-mail d'alerte. Cliquez ci-dessous pour retrouver toutes vos alertes, sans mot de passe."}
             </p>
           </div>
 
@@ -93,7 +101,7 @@ export const AccesParLien: React.FC<AccesParLienProps> = ({
               autoFocus
               aria-live="polite"
             >
-              {enCours ? 'Connexion en cours…' : 'Accéder à mon espace'}
+              {enCours ? (estPilote ? 'Ouverture en cours…' : 'Connexion en cours…') : (estPilote ? 'Ouvrir mon espace pilote' : 'Accéder à mon espace')}
             </Button>
 
             {/* Lien secondaire avec zone de clic 44px */}
@@ -104,13 +112,13 @@ export const AccesParLien: React.FC<AccesParLienProps> = ({
                 disabled={enCours}
                 className="inline-flex items-center justify-center min-h-[44px] px-3 text-[0.875rem] font-medium text-discret hover:text-teal underline transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-focus rounded-champ disabled:opacity-50"
               >
-                Me connecter avec mon mot de passe
+                {estPilote ? 'Retour à l\'accueil' : 'Me connecter avec mon mot de passe'}
               </button>
             </div>
           </div>
 
           <p className="text-[0.8125rem] text-discret leading-relaxed pt-3 border-t border-ligne">
-            Ce lien est personnel, valable 7 jours et ne fonctionne qu'une seule fois. Ne le transférez à personne.
+            {estPilote ? "Ce lien est personnel, valable 48 heures et ne fonctionne qu'une seule fois. Ne le transférez à personne." : "Ce lien est personnel, valable 7 jours et ne fonctionne qu'une seule fois. Ne le transférez à personne."}
           </p>
         </Card>
       </main>

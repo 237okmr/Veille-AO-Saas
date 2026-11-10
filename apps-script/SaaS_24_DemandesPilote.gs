@@ -119,6 +119,10 @@ function saasPiloteDemande(payload, e) {
   const v = saasPiloteValider(payload);
   if (!v.ok) return saasErreur(v.message, 400);
   const d = v.donnees;
+  if (saasPiloteEmailJetable(d.email)) {
+    return saasErreur("Les adresses e-mail temporaires ne sont pas acceptées. Utilisez votre adresse professionnelle ou personnelle.", 400);
+  }
+  const modeAuto = saasPiloteAutoActif();
 
   // 3. Plafond global par heure (protège l'onglet et le quota Gmail)
   try {
@@ -147,12 +151,16 @@ function saasPiloteDemande(payload, e) {
   let idDemande = "";
   let ligne = 0;
   let doublon = false;
+  let ligneExistante = 0;
+  let statutExistant = "";
   try {
     const derniere = feuille.getLastRow();
     if (derniere >= 2) {
-      const emails = feuille.getRange(2, 5, derniere - 1, 1).getValues();
-      for (let i = 0; i < emails.length; i++) {
-        if (String(emails[i][0] || "").replace(/^'/, "").trim().toLowerCase() === d.email) { doublon = true; break; }
+      const lignes = feuille.getRange(2, 1, derniere - 1, 7).getValues();
+      for (let i = 0; i < lignes.length; i++) {
+        if (String(lignes[i][4] || "").replace(/^'/, "").trim().toLowerCase() === d.email) {
+          doublon = true; ligneExistante = i + 2; statutExistant = String(lignes[i][6] || ""); break;
+        }
       }
     }
     if (!doublon) {
@@ -178,17 +186,38 @@ function saasPiloteDemande(payload, e) {
   // 5. Doublon : même réponse qu'une nouvelle demande, aucune écriture, aucun e-mail.
   if (doublon) {
     saasLogger("", d.email, "", "PILOTE_DOUBLON", "Demande déjà enregistrée", ip, true);
+    // Mode automatique : une demande restée sans confirmation reçoit un nouveau lien (au plus un toutes les 10 minutes).
+    if (modeAuto && statutExistant === "EN_ATTENTE_CONFIRMATION" && ligneExistante > 0) {
+      try {
+        const cache = CacheService.getScriptCache();
+        const cleR = "PILOTE_RELANCE_" + saasLimiteEmpreinte(d.email);
+        if (!cache.get(cleR)) {
+          const etat = saasPiloteInviterConfirmation(feuille, ligneExistante, d);
+          feuille.getRange(ligneExistante, 11).setValue(etat);
+        }
+      } catch (errRelance) {
+        Logger.log("[PILOTE] Relance impossible : " + errRelance.message);
+      }
+    }
     return saasReponse(true, null, "Demande enregistrée.", 201);
   }
 
   saasLogger("", d.email, "", "PILOTE_DEMANDE", "Demande " + idDemande + " (" + d.secteur + ")", ip, true);
 
   // 6. Notification de l'administrateur (un échec n'annule jamais la demande, déjà enregistrée)
-  const statutMail = saasPiloteNotifierAdmin(idDemande, d);
+  const statutMail = SAAS_PILOTE_ENVOI_MAILS === false ? "SIMULÉ" : saasPiloteNotifierAdmin(idDemande, d);
   try { feuille.getRange(ligne, 9).setValue(statutMail); } catch (errStatut) {}
 
-  // 7. Confirmation au prospect (jamais bloquante : la demande est déjà enregistrée)
-  const statutProspect = saasPiloteConfirmerProspect(d);
+  // 7. Suite pour le prospect (jamais bloquante : la demande est déjà enregistrée).
+  // Mode automatique : lien de confirmation (ou liste d'attente si le plafond est atteint).
+  // Mode manuel : simple accusé de réception, comme avant.
+  let statutProspect;
+  try {
+    statutProspect = modeAuto ? saasPiloteSuiteAutomatique(feuille, ligne, d) : saasPiloteConfirmerProspect(d);
+  } catch (errSuite) {
+    Logger.log("[PILOTE] Suite impossible : " + errSuite.message);
+    statutProspect = "ÉCHEC";
+  }
   try { feuille.getRange(ligne, 11).setValue(statutProspect); } catch (errStatut2) {}
 
   return saasReponse(true, null, "Demande enregistrée.", 201);
