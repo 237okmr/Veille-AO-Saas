@@ -197,6 +197,12 @@ function saasRouter(methode, route, payload, e) {
     return saasAuthLien(payload, e);
   }
 
+  // Connexion administrateur par Google (SaaS_29_ConnexionGoogle.gs) : exige le secret dédié
+  // GOOGLE_ADMIN_SECRET, que seul le serveur de l'application connaît.
+  if (r === "/auth/google-admin" && methode === "POST") {
+    return saasAuthGoogleAdmin(payload, e);
+  }
+
   if (r === "/auth/logout" && methode === "POST") {
     return saasAuthLogout(payload, e);
   }

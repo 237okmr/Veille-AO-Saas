@@ -115,7 +115,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   // Si code 401
   if (res.status === 401 || data?.code === 401) {
-    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/lien')) {
+    if (!endpoint.includes('/auth/login') && !endpoint.includes('/auth/lien') && !endpoint.includes('/auth/google')) {
       onUnauthorized();
     }
     throw new Error(data?.message || "Email ou mot de passe incorrect");
@@ -141,6 +141,13 @@ export const api = {
     request<User>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ route: '/auth/login', email, motDePasse })
+    }),
+
+  // Connexion administrateur : le jeton Google est vérifié par le serveur (jamais l'adresse envoyée par le navigateur).
+  loginGoogle: (credential: string) =>
+    request<User>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ route: '/auth/google', credential })
     }),
 
   loginParLien: (jeton: string) =>

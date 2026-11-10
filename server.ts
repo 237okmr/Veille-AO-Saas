@@ -117,7 +117,7 @@ function getRouteCategory(req: Request): 'auth' | 'radar' | 'api' {
   const bodyRoute = (req.body && typeof req.body === 'object' && req.body.route) ? String(req.body.route) : '';
   const fullContext = `${rawPath} ${queryRoute} ${bodyRoute}`;
 
-  if (fullContext.includes('/auth/login') || fullContext.includes('/auth/lien') || fullContext.includes('/public/pilote')) {
+  if (fullContext.includes('/auth/login') || fullContext.includes('/auth/lien') || fullContext.includes('/auth/google') || fullContext.includes('/public/pilote')) {
     return 'auth';
   }
   if (rawPath.startsWith('/public/radar-ticker') || rawPath.startsWith('/api/public/radar-ticker') || queryRoute.includes('/public/radar-ticker')) {
@@ -425,6 +425,7 @@ app.get('/api/config', (_req: Request, res: Response) => {
       isConfigured: configured,
       mode: configured ? 'APPS_SCRIPT_PRODUCTION' : 'NON_CONFIGURE',
       apiUrlDisplay: configured ? effectiveUrl.substring(0, 35) + '...' : 'Non configuré',
+      googleClientId: (process.env.GOOGLE_CLIENT_ID || '').trim() || null,
       version: '1.0.0-PROD'
     },
     timestamp: new Date().toISOString()
@@ -544,6 +545,69 @@ app.get('/api/public/radar-ticker', async (_req: Request, res: Response) => {
     },
     timestamp: new Date().toISOString()
   });
+});
+
+// ============================================================================
+// CONNEXION ADMINISTRATEUR PAR GOOGLE
+// - Le navigateur envoie le jeton Google (credential) ; l'adresse n'est JAMAIS prise dans le corps.
+// - Google vérifie la signature et l'expiration (tokeninfo) ; on contrôle l'audience, l'émetteur et l'adresse vérifiée.
+// - Apps Script ouvre la session seulement si le secret dédié GOOGLE_ADMIN_SECRET est présenté
+//   et si l'adresse correspond à un compte ADMIN actif.
+// - Réponse d'échec neutre : aucune indication sur l'existence du compte.
+// ============================================================================
+const reponseRefusGoogle = (res: Response, code = 401, message = 'Accès refusé.') =>
+  res.status(code).json({ succes: false, code, message, donnees: null, timestamp: new Date().toISOString() });
+
+app.post('/api/auth/google', async (req: Request, res: Response) => {
+  const clientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+  const secretGoogle = (process.env.GOOGLE_ADMIN_SECRET || '').trim();
+  if (!clientId || secretGoogle.length < 32 || !isRealApiConfigured()) {
+    return reponseRefusGoogle(res, 503, 'Connexion Google indisponible.');
+  }
+
+  const credential = req.body && typeof req.body.credential === 'string' ? req.body.credential.trim() : '';
+  if (!credential || credential.length > 4096) return reponseRefusGoogle(res);
+
+  let info: any = null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential),
+      { signal: ctrl.signal }
+    );
+    clearTimeout(timer);
+    if (!r.ok) return reponseRefusGoogle(res);
+    info = await r.json();
+  } catch {
+    return reponseRefusGoogle(res, 502, 'Connexion Google momentanément indisponible.');
+  }
+
+  const emetteurOk = info && (info.iss === 'https://accounts.google.com' || info.iss === 'accounts.google.com');
+  const expOk = info && Number(info.exp) * 1000 > Date.now();
+  const verifie = info && (info.email_verified === true || info.email_verified === 'true');
+  const email = info && typeof info.email === 'string' ? info.email.trim().toLowerCase() : '';
+  if (!info || info.aud !== clientId || !emetteurOk || !expOk || !verifie || !email) {
+    return reponseRefusGoogle(res);
+  }
+
+  try {
+    const rep = await forwardToAppsScript(
+      {
+        method: 'POST',
+        query: {},
+        headers: {},
+        body: { route: '/auth/google-admin', email, secretGoogle }
+      } as any,
+      '/auth/google-admin'
+    );
+    if (rep && rep.succes === true && rep.donnees && rep.donnees.role === 'ADMIN') {
+      return res.status(200).json(rep);
+    }
+    return reponseRefusGoogle(res, rep && rep.code === 503 ? 503 : 401, rep && rep.code === 503 ? 'Connexion Google indisponible.' : 'Accès refusé.');
+  } catch {
+    return reponseRefusGoogle(res, 502, 'Connexion Google momentanément indisponible.');
+  }
 });
 
 // Proxy router for all other /api/* requests

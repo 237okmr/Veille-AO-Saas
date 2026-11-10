@@ -9,6 +9,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   apiConfig: ApiConfigInfo | null;
   login: (email: string, motDePasse: string) => Promise<User>;
+  loginGoogle: (credential: string) => Promise<User>;
   loginParLien: (jeton: string) => Promise<User>;
   confirmerPilote: (jeton: string) => Promise<User>;
   register: (payload: { email: string; motDePasse: string; nom: string; telephone?: string; langue?: string }) => Promise<User>;
@@ -142,6 +143,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Connexion administrateur par Google : refus neutre, aucune indication sur l'existence du compte.
+  const loginGoogle = async (credential: string): Promise<User> => {
+    const res = await api.loginGoogle(credential);
+    if (res.succes === true && res.donnees && res.donnees.token && res.donnees.role === 'ADMIN') {
+      const authenticatedUser = res.donnees;
+      setToken(res.donnees.token);
+      setStoredUser(authenticatedUser);
+      setUser(authenticatedUser);
+      toast.success('Connexion réussie.', 'Connecté en tant qu\'Administrateur');
+      window.history.pushState({}, '', '/admin');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return authenticatedUser;
+    }
+    throw new Error('Accès refusé.');
+  };
+
   // Connexion par le lien personnel des e-mails d'alerte (jeton à usage unique).
   // N'utilise pas l'état global « loading » : l'écran d'accès gère lui-même son attente,
   // et l'échec n'affiche aucun message ici (l'appelant décide quoi montrer).
@@ -226,6 +243,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         apiConfig,
         login,
+        loginGoogle,
         loginParLien,
         confirmerPilote,
         register,

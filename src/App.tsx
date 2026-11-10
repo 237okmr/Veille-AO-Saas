@@ -8,6 +8,7 @@ import { ToastProvider, useToast } from './context/ToastContext';
 import { LangueProvider } from './context/LangueContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthPage } from './components/auth/AuthPage';
+import { AdminLoginPage } from './components/auth/AdminLoginPage';
 import { AccesParLien } from './components/auth/AccesParLien';
 import { AppLayout } from './components/layout/AppLayout';
 import { DiagnosticPage } from './components/diagnostic/DiagnosticPage';
@@ -69,6 +70,16 @@ const MainRouter: React.FC = () => {
       setPathname(target);
     }
   }, [loading, pathname, user]);
+
+  // Sécurité route /admin : un utilisateur connecté qui n'est pas administrateur est renvoyé vers son espace,
+  // sans aucune indication sur le contenu de /admin.
+  const estRouteAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
+  React.useEffect(() => {
+    if (!loading && estRouteAdmin && user && user.role !== 'ADMIN') {
+      window.history.replaceState({}, '', '/client');
+      setPathname('/client');
+    }
+  }, [loading, estRouteAdmin, user]);
 
   // Redirection automatique de la racine vers /admin ou /client dès que l'utilisateur est connecté
   React.useEffect(() => {
@@ -134,6 +145,11 @@ const MainRouter: React.FC = () => {
         }}
       />
     );
+  }
+
+  // 3b. Adresse /admin sans session : page de connexion dédiée à l'administration
+  if (estRouteAdmin && !user) {
+    return <AdminLoginPage />;
   }
 
   // 4. Écran normal : espace applicatif authentifié ou page d'accueil / connexion

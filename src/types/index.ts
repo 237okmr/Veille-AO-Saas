@@ -436,6 +436,7 @@ export interface ApiConfigInfo {
   isConfigured: boolean;
   mode: 'APPS_SCRIPT_PRODUCTION' | 'NON_CONFIGURE';
   apiUrlDisplay: string;
+  googleClientId?: string | null;
   version: string;
 }
 
