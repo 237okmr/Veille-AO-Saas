@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { formaterDateHeureDouala } from '../../utils/dates';
+import { Button } from '../ui';
+import { ConfirmationResume, LigneResume } from './ConfirmationResume';
+import { lireChangementsReglages, ChangementReglage } from '../../admin/historiqueReglages';
+import { valeurLisible } from '../../admin/registreReglages';
 
 export const AdminAudit: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
@@ -22,7 +26,56 @@ export const AdminAudit: React.FC = () => {
   const [actionFilter, setActionFilter] = useState('');
   const [successFilter, setSuccessFilter] = useState('');
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
+  const [retablissement, setRetablissement] = useState<{ lignes: LigneResume[]; changement: ChangementReglage } | null>(null);
+  const [retablissementEnCours, setRetablissementEnCours] = useState(false);
   const toast = useToast();
+
+  // Prépare le rétablissement d'une ancienne valeur : compare à la valeur actuelle et demande confirmation.
+  const preparerRetablissement = async (c: ChangementReglage) => {
+    try {
+      const res = await api.getReglages();
+      const actuelle = String((res.donnees?.parametres as Record<string, unknown> | undefined)?.[c.def.cle] ?? '');
+      if (actuelle.trim() === c.avant.trim()) {
+        toast.success('Déjà à jour', `« ${c.def.label} » a déjà cette valeur.`);
+        return;
+      }
+      setRetablissement({
+        changement: c,
+        lignes: [
+          {
+            label: c.def.label,
+            ancien: valeurLisible(c.def, actuelle),
+            nouveau: valeurLisible(c.def, c.avant),
+            note: c.def.effet,
+            attention: !!c.def.impactQuotaIA
+          }
+        ]
+      });
+    } catch (e: any) {
+      toast.error('Erreur', e.message);
+    }
+  };
+
+  const confirmerRetablissement = async () => {
+    if (!retablissement) return;
+    const { changement } = retablissement;
+    setRetablissementEnCours(true);
+    try {
+      const res = await api.updateReglagesParametres({ [changement.def.cle]: changement.avant });
+      if ((res.donnees?.refuses || []).length > 0) {
+        toast.error('Rétablissement refusé', (res.donnees?.refuses || []).join(', '));
+      } else {
+        toast.success('Valeur rétablie', changement.def.label);
+        setRetablissement(null);
+        setSelectedLog(null);
+        loadAudit();
+      }
+    } catch (e: any) {
+      toast.error('Erreur', e.message);
+    } finally {
+      setRetablissementEnCours(false);
+    }
+  };
 
   useEffect(() => {
     loadAudit();
@@ -104,6 +157,7 @@ export const AdminAudit: React.FC = () => {
             className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
           >
             <option value="">Toutes les actions</option>
+            <option value="REGLAGES">Réglages</option>
             <option value="PIPELINE">Actions Pipeline</option>
             <option value="CLIENT">Gestion Clients</option>
             <option value="ALERT">Actions Alertes</option>
@@ -228,11 +282,35 @@ export const AdminAudit: React.FC = () => {
 
               <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
                 <span className="text-slate-400 block text-[10px] mb-1">Détails enregistrés</span>
-                <p className="text-slate-800 dark:text-slate-200 font-mono leading-relaxed">{selectedLog.details}</p>
+                <p className="text-slate-800 dark:text-slate-200 font-mono leading-relaxed break-words">{selectedLog.details}</p>
               </div>
+
+              {lireChangementsReglages(selectedLog.action, selectedLog.details).map((c) => (
+                <div key={c.def.cle} className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+                  <p className="font-sans font-semibold text-slate-800 dark:text-slate-200">{c.def.label}</p>
+                  <p className="font-sans text-slate-700 dark:text-slate-300">
+                    {valeurLisible(c.def, c.avant)} <span aria-hidden="true">→</span> <span className="sr-only">devient </span>
+                    <span className="font-semibold">{valeurLisible(c.def, c.apres)}</span>
+                  </p>
+                  <Button variante="secondaire" taille="sm" onClick={() => preparerRetablissement(c)}>
+                    Rétablir l’ancienne valeur
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      )}
+
+      {retablissement && (
+        <ConfirmationResume
+          titre="Rétablir l’ancienne valeur ?"
+          lignes={retablissement.lignes}
+          libelleConfirmer="Rétablir"
+          enCours={retablissementEnCours}
+          onConfirmer={confirmerRetablissement}
+          onAnnuler={() => setRetablissement(null)}
+        />
       )}
     </div>
   );
