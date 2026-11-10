@@ -68,7 +68,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
   // Step 2 State
   const [regions, setRegions] = useState<string[]>(['CENTRE', 'LITTORAL']);
   const [procedures, setProcedures] = useState<string[]>(['AONO', 'AONI', 'DC']);
-  const [montantMinimum, setMontantMinimum] = useState<number>(20000000);
+  const [montantMinimum, setMontantMinimum] = useState<number>(0);
   const [seuilScore, setSeuilScore] = useState<number>(3.0);
 
   // Step 3 State
@@ -111,7 +111,7 @@ export const ClientCreateWizardModal: React.FC<ClientCreateWizardModalProps> = (
       setActif('OUI');
       setRegions(['CENTRE', 'LITTORAL']);
       setProcedures(['AONO', 'AONI', 'DC']);
-      setMontantMinimum(20000000);
+      setMontantMinimum(0);
       setSeuilScore(3.0);
       setPromptMetier('');
       setSiteWeb('');
