@@ -24,7 +24,11 @@ export function lireChangementsReglages(action: string, details: string): Change
   const i = texte.indexOf(MARQUEUR);
   if (i === -1) return [];
   try {
-    const brut = JSON.parse(texte.slice(i + MARQUEUR.length).trim());
+    // Le JSON peut être suivi de « refuses=… » : on ne garde que jusqu'à la dernière accolade.
+    const reste = texte.slice(i + MARQUEUR.length);
+    const fin = reste.lastIndexOf('}');
+    if (fin === -1) return [];
+    const brut = JSON.parse(reste.slice(0, fin + 1).trim());
     if (!brut || typeof brut !== 'object') return [];
     const resultat: ChangementReglage[] = [];
     Object.keys(brut).forEach((cle) => {

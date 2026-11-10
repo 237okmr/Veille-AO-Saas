@@ -62,8 +62,9 @@ export const AdminAudit: React.FC = () => {
     setRetablissementEnCours(true);
     try {
       const res = await api.updateReglagesParametres({ [changement.def.cle]: changement.avant });
-      if ((res.donnees?.refuses || []).length > 0) {
-        toast.error('Rétablissement refusé', (res.donnees?.refuses || []).join(', '));
+      const refuses = (res.donnees?.refuses || []).filter((c) => c !== 'route' && c !== 'token');
+      if (refuses.length > 0) {
+        toast.error('Rétablissement refusé', refuses.join(', '));
       } else {
         toast.success('Valeur rétablie', changement.def.label);
         setRetablissement(null);
@@ -253,7 +254,7 @@ export const AdminAudit: React.FC = () => {
           <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Détail de l'événement d'audit [{selectedLog.id}]
+                Détail de l'événement d'audit{selectedLog.id ? ` [${selectedLog.id}]` : ''}
               </h3>
               <button
                 onClick={() => setSelectedLog(null)}

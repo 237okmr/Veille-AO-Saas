@@ -103,7 +103,8 @@ export const AdminSettings: React.FC = () => {
         });
         try {
           const res = await api.updateReglagesParametres(payload);
-          const refuses = res.donnees?.refuses || [];
+          // « route » et « token » sont ajoutés par le transport, pas des réglages : on ne les signale pas.
+          const refuses = (res.donnees?.refuses || []).filter((c) => c !== 'route' && c !== 'token');
           if (refuses.length > 0) {
             toast.error('Certains champs refusés', refuses.join(', '));
           } else {
