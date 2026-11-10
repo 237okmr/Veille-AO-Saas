@@ -125,7 +125,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Redirection automatique selon le rôle :
         // Si role === "ADMIN" → vers /admin (dashboard)
         // Si role === "CLIENT" → vers /client (dashboard)
-        const targetPath = authenticatedUser.role === 'ADMIN' ? '/admin' : '/client';
+        const cheminActuel = window.location.pathname;
+        const targetPath = authenticatedUser.role === 'ADMIN'
+          ? (cheminActuel === '/admin' || cheminActuel.startsWith('/admin/') ? cheminActuel : '/admin')
+          : '/client';
         window.history.pushState({}, '', targetPath);
         window.dispatchEvent(new PopStateEvent('popstate'));
 
@@ -152,7 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setStoredUser(authenticatedUser);
       setUser(authenticatedUser);
       toast.success('Connexion réussie.', 'Connecté en tant qu\'Administrateur');
-      window.history.pushState({}, '', '/admin');
+      // On reste sur l'adresse admin demandée (ex. /admin/reglages) ; sinon tableau de bord.
+      const cheminActuel = window.location.pathname;
+      window.history.pushState({}, '', cheminActuel.startsWith('/admin/') ? cheminActuel : '/admin');
       window.dispatchEvent(new PopStateEvent('popstate'));
       return authenticatedUser;
     }

@@ -1,21 +1,8 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useLangue } from '../../context/LangueContext';
-import {
-  LayoutDashboard,
-  Bell,
-  Building2,
-  Sliders,
-  User,
-  Users,
-  History,
-  Lock,
-  Settings,
-  CalendarClock,
-  Zap,
-  Inbox,
-  X
-} from 'lucide-react';
+import { LayoutDashboard, Bell, Building2, Sliders, User, CalendarClock, X } from 'lucide-react';
+import { GROUPES_ADMIN, modulesAdminVisibles } from '../../admin/modules';
 import { LogoMarketAdvisor } from '../brand/LogoMarketAdvisor';
 
 interface SidebarProps {
@@ -46,17 +33,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'client-account', label: 'Mon Compte', icon: User }
   ];
 
-  const adminNav = [
-    { id: 'admin-dashboard', label: 'Supervision globale', icon: LayoutDashboard },
-    { id: 'admin-clients', label: 'Entreprises clientes', icon: Building2 },
-    { id: 'admin-avis', label: 'Avis collectés', icon: Inbox },
-    { id: 'admin-alertes', label: 'Alertes clients', icon: Bell },
-    { id: 'admin-users', label: 'Comptes utilisateurs', icon: Users },
-    { id: 'admin-pipeline', label: 'Pipeline de collecte', icon: Zap },
-    { id: 'admin-audit', label: 'Journal d’audit', icon: History },
-    { id: 'admin-sessions', label: 'Sessions & Sécurité', icon: Lock },
-    { id: 'admin-settings', label: 'Réglages', icon: Settings }
-  ];
+  const modulesVisibles = modulesAdminVisibles(user?.role);
+  const modulesEnTete = modulesVisibles.filter((m) => m.groupe === null);
+
+  const boutonNav = (item: { id: string; label: string; icon: React.ElementType; count?: number }) => {
+    const Icon = item.icon;
+    const isActive = currentView === item.id;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => {
+          onNavigate(item.id);
+          onClose();
+        }}
+        aria-current={isActive ? 'page' : undefined}
+        className={`w-full h-[44px] flex items-center justify-between px-3 text-[0.9375rem] rounded-champ transition-colors text-left cursor-pointer ${
+          isActive
+            ? 'bg-ok-fond text-teal font-semibold'
+            : 'text-discret hover:bg-onglets hover:text-encre font-medium'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 truncate">
+          <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-teal' : 'text-discret'}`} />
+          <span className="truncate">{item.label}</span>
+        </div>
+        {typeof item.count === 'number' && item.count > 0 && (
+          <span className="ml-2 px-2 py-0.5 text-[0.75rem] font-bold rounded-full bg-amber-500 text-white tabular-nums">
+            {item.count}
+          </span>
+        )}
+      </button>
+    );
+  };
 
   return (
     <>
@@ -97,49 +106,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Items */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          {/* Main User Navigation */}
-          <div>
-            <div className="px-3 pb-2 text-[0.8125rem] font-semibold text-discret">
-              {isAdmin ? 'Administration SaaS' : 'Espace client'}
-            </div>
-            <nav className="space-y-1">
-              {(isAdmin ? adminNav : clientNav).map((item) => {
-                const Icon = item.icon;
-                const isActive = currentView === item.id;
+          {isAdmin ? (
+            <>
+              <div>
+                <div className="px-3 pb-2 text-[0.8125rem] font-semibold text-discret">Administration SaaS</div>
+                <nav className="space-y-1">{modulesEnTete.map(boutonNav)}</nav>
+              </div>
+              {GROUPES_ADMIN.map((groupe) => {
+                const items = modulesVisibles.filter((m) => m.groupe === groupe.id);
+                if (items.length === 0) return null;
                 return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      onNavigate(item.id);
-                      onClose();
-                    }}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`w-full h-[44px] flex items-center justify-between px-3 text-[0.9375rem] rounded-champ transition-colors text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-ok-fond text-teal font-semibold'
-                        : 'text-discret hover:bg-onglets hover:text-encre font-medium'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <Icon
-                        className={`w-5 h-5 shrink-0 ${
-                          isActive ? 'text-teal' : 'text-discret'
-                        }`}
-                      />
-                      <span className="truncate">{item.label}</span>
-                    </div>
-
-                    {'count' in item && typeof item.count === 'number' && item.count > 0 && (
-                      <span className="ml-2 px-2 py-0.5 text-[0.75rem] font-bold rounded-full bg-amber-500 text-white tabular-nums">
-                        {item.count}
-                      </span>
-                    )}
-                  </button>
+                  <div key={groupe.id}>
+                    <div className="px-3 pb-2 text-[0.8125rem] font-semibold text-discret">{groupe.titre}</div>
+                    <nav className="space-y-1" aria-label={groupe.titre}>{items.map(boutonNav)}</nav>
+                  </div>
                 );
               })}
-            </nav>
-          </div>
+            </>
+          ) : (
+            <div>
+              <div className="px-3 pb-2 text-[0.8125rem] font-semibold text-discret">Espace client</div>
+              <nav className="space-y-1">{clientNav.map(boutonNav)}</nav>
+            </div>
+          )}
 
           {/* Discrete sources followed line */}
           <div className="px-3 pt-4 border-t border-ligne text-[0.8125rem] text-discret leading-relaxed">

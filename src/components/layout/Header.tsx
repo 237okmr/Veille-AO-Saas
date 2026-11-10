@@ -11,6 +11,7 @@ import {
   Bell,
   Activity
 } from 'lucide-react';
+import { moduleAdminParId } from '../../admin/modules';
 
 interface HeaderProps {
   currentView: string;
@@ -54,29 +55,10 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Calendrier des échéances';
       case 'client-account':
         return 'Paramètres du compte';
-      // Admin views
-      case 'admin-dashboard':
-        return 'Supervision globale SaaS';
-      case 'admin-clients':
-        return 'Gestion des entreprises clientes';
-      case 'admin-avis':
-        return 'Avis collectés';
-      case 'admin-alertes':
-        return 'Alertes clients';
-      case 'admin-users':
-        return 'Gestion des utilisateurs & rôles';
-      case 'admin-pipeline':
-        return 'Actions du pipeline de collecte';
-      case 'admin-audit':
-        return 'Journal d’audit & Événements';
-      case 'admin-sessions':
-        return 'Sessions actives & Sécurité';
-      case 'admin-settings':
-        return 'Réglages de la plateforme';
       case 'diagnostic':
         return 'Diagnostic technique';
       default:
-        return 'Market Advisor CM';
+        return moduleAdminParId(currentView)?.titre ?? 'Market Advisor CM';
     }
   };
 

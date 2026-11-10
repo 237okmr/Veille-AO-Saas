@@ -9,20 +9,16 @@ import { ClientPreferences } from '../client/ClientPreferences';
 import { ClientDeadlines } from '../client/ClientDeadlines';
 import { ClientAccount } from '../client/ClientAccount';
 import { BandeauxCompte } from '../client/BandeauxCompte';
-import { AdminDashboard } from '../admin/AdminDashboard';
-import { AdminClients } from '../admin/AdminClients';
-import { AdminAvis } from '../admin/AdminAvis';
-import { AdminAlertes } from '../admin/AdminAlertes';
-import { AdminUsers } from '../admin/AdminUsers';
-import { AdminPipeline } from '../admin/AdminPipeline';
-import { AdminAudit } from '../admin/AdminAudit';
-import { AdminSessions } from '../admin/AdminSessions';
-import { AdminSettings } from '../admin/AdminSettings';
+import { MODULES_ADMIN, moduleAdminParChemin, moduleAdminParId, roleAutorise } from '../../admin/modules';
 import { DiagnosticPage } from '../diagnostic/DiagnosticPage';
 import { ApiConfigModal } from '../common/ApiConfigModal';
 import { LogoMarketAdvisor } from '../brand/LogoMarketAdvisor';
 import { api } from '../../services/api';
 import { Menu } from 'lucide-react';
+
+// Vue admin correspondant à une adresse ; une adresse inconnue retombe sur le tableau de bord.
+const vueAdminDepuisChemin = (chemin: string): string =>
+  moduleAdminParChemin(chemin)?.id ?? 'admin-dashboard';
 
 export const AppLayout: React.FC = () => {
   const { user } = useAuth();
@@ -32,7 +28,7 @@ export const AppLayout: React.FC = () => {
     if (typeof window !== 'undefined') {
       const p = window.location.pathname;
       if (p === '/diagnostic') return isAdmin ? 'diagnostic' : 'client-dashboard';
-      if (p === '/admin') return 'admin-dashboard';
+      if (p === '/admin' || p.startsWith('/admin/')) return vueAdminDepuisChemin(p);
       if (p === '/client') return 'client-dashboard';
     }
     return isAdmin ? 'admin-dashboard' : 'client-dashboard';
@@ -57,7 +53,7 @@ export const AppLayout: React.FC = () => {
     const handlePop = () => {
       const p = window.location.pathname;
       if (p === '/diagnostic') setCurrentView(isAdmin ? 'diagnostic' : 'client-dashboard');
-      else if (p === '/admin') setCurrentView('admin-dashboard');
+      else if (p === '/admin' || p.startsWith('/admin/')) setCurrentView(vueAdminDepuisChemin(p));
       else if (p === '/client') setCurrentView('client-dashboard');
     };
     window.addEventListener('popstate', handlePop);
@@ -71,8 +67,11 @@ export const AppLayout: React.FC = () => {
       return;
     }
     setCurrentView(view);
-    if (view === 'admin-dashboard') {
-      window.history.pushState({}, '', '/admin');
+    const moduleAdmin = moduleAdminParId(view);
+    if (moduleAdmin) {
+      if (window.location.pathname !== moduleAdmin.chemin) {
+        window.history.pushState({}, '', moduleAdmin.chemin);
+      }
     } else if (view === 'client-dashboard') {
       window.history.pushState({}, '', '/client');
     } else if (view === 'diagnostic') {
@@ -106,25 +105,7 @@ export const AppLayout: React.FC = () => {
       case 'client-account':
         return <ClientAccount />;
 
-      // Admin Space
-      case 'admin-dashboard':
-        return <AdminDashboard onNavigate={handleNavigate} />;
-      case 'admin-clients':
-        return <AdminClients />;
-      case 'admin-avis':
-        return <AdminAvis onNavigate={handleNavigate} />;
-      case 'admin-alertes':
-        return <AdminAlertes onNavigate={handleNavigate} />;
-      case 'admin-users':
-        return <AdminUsers />;
-      case 'admin-pipeline':
-        return <AdminPipeline />;
-      case 'admin-audit':
-        return <AdminAudit />;
-      case 'admin-sessions':
-        return <AdminSessions />;
-      case 'admin-settings':
-        return <AdminSettings />;
+      // Admin Space : tout vient du manifeste (src/admin/modules.tsx)
       case 'diagnostic':
         return isAdmin ? (
           <DiagnosticPage onBack={() => handleNavigate('admin-dashboard')} />
@@ -132,12 +113,14 @@ export const AppLayout: React.FC = () => {
           <ClientDashboard onNavigate={handleNavigate} />
         );
 
-      default:
-        return isAdmin ? (
-          <AdminDashboard onNavigate={handleNavigate} />
-        ) : (
-          <ClientDashboard onNavigate={handleNavigate} />
-        );
+      default: {
+        if (isAdmin) {
+          const m = moduleAdminParId(currentView) ?? MODULES_ADMIN[0];
+          if (roleAutorise(user?.role, m.roleMin)) return m.rendu({ onNavigate: handleNavigate });
+          return MODULES_ADMIN[0].rendu({ onNavigate: handleNavigate });
+        }
+        return <ClientDashboard onNavigate={handleNavigate} />;
+      }
     }
   };
 
