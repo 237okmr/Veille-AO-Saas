@@ -322,6 +322,19 @@ function orchExecuterRoutineNuit() {
       metriques.alertesCritiques.push("Fonction de matching absente.");
     }
 
+    // Chantier 2 — synchronisation en lecture seule vers Supabase (SaaS_30_SyncSupabase.gs).
+    // Volontairement isolée dans son propre try/catch : un échec ici ne doit jamais
+    // faire échouer la routine de nuit (collecte + matching), qui reste prioritaire.
+    try {
+      if (typeof saasSyncSupabaseTout === "function") {
+        Logger.log("-> Synchronisation Supabase (lecture seule)...");
+        const syncRes = saasSyncSupabaseTout();
+        Logger.log("Synchro Supabase : " + JSON.stringify(syncRes));
+      }
+    } catch (errSync) {
+      Logger.log("[AVERTISSEMENT] Synchro Supabase a échoué (pipeline principal non affecté) : " + errSync.message);
+    }
+
     props.setProperty(ORCH_PROP_METRIQUES, JSON.stringify(metriques));
     props.setProperty(ORCH_PROP_ETAPE, "NUIT_TERMINEE");
     orchEcrireEtatNuit("TERMINEE");
