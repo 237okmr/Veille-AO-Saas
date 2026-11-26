@@ -95,6 +95,7 @@ function saasSupaConstruireLignesAvis_() {
       montant_attribue: a.montantAttribue,
       date_attribution: a.dateAttribution || null,
       recherche: a._recherche || null,
+      ligne: a._ligne,
       synced_at: maintenant
     };
   });
@@ -129,8 +130,26 @@ function saasSupaListerClientsActifs_() {
   return clients;
 }
 
+/**
+ * Position (numéro de ligne) de chaque idMatch dans ALERTES_A_ENVOYER, lecture seule.
+ * Sert uniquement de critère de départage, pour trier à l'identique de l'écran admin
+ * quand plusieurs alertes partagent exactement la même date de match.
+ */
+function saasSupaLignesAlertesParIdMatch_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const feuille = ss.getSheetByName('ALERTES_A_ENVOYER');
+  if (!feuille) return {};
+  const data = feuille.getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < data.length; i++) {
+    const idMatch = (data[i][0] || '').toString().trim();
+    if (idMatch) map[idMatch] = i;
+  }
+  return map;
+}
+
 /** Construit les lignes "alertes_client" d'un client (réutilise saasChargerAlertesClient, lecture seule). */
-function saasSupaConstruireLignesAlertesClient_(client) {
+function saasSupaConstruireLignesAlertesClient_(client, lignesParIdMatch) {
   const alertes = saasChargerAlertesClient(client.idClient);
   const maintenant = new Date().toISOString();
   return alertes.map(function (al) {
@@ -139,6 +158,7 @@ function saasSupaConstruireLignesAlertesClient_(client) {
       id_client: client.idClient,
       nom_client: client.nomClient || null,
       email_destinataire: client.emailDestinataire || null,
+      ligne: lignesParIdMatch[al.idMatch],
       id_avis: al.idAO,
       numero_avis: al.numeroAvis || null,
       date_match: al.dateMatch || null,
@@ -187,9 +207,10 @@ function saasSyncSupabaseTout() {
   const lignesAvis = saasSupaConstruireLignesAvis_();
   resultat.avis = saasSupaEnvoyerParPaquets_('avis', 'id_avis', lignesAvis);
 
+  const lignesParIdMatch = saasSupaLignesAlertesParIdMatch_();
   const clients = saasSupaListerClientsActifs_();
   clients.forEach(function (client) {
-    const lignes = saasSupaConstruireLignesAlertesClient_(client);
+    const lignes = saasSupaConstruireLignesAlertesClient_(client, lignesParIdMatch);
     resultat.alertes[client.idClient] = saasSupaEnvoyerParPaquets_('alertes_client', 'id_client,id_match', lignes);
   });
 

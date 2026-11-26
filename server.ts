@@ -610,6 +610,291 @@ app.post('/api/auth/google', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// CHANTIER 2 — LECTURE RAPIDE DEPUIS SUPABASE (repli automatique sur Apps Script)
+// Le classeur Google Sheets reste la référence ; ces deux routes ne font QUE
+// lire une copie en lecture seule, alimentée par apps-script/SaaS_30_SyncSupabase.gs.
+// Aucune écriture ici. Si Supabase n'est pas configuré, injoignable ou en erreur,
+// on repart automatiquement sur le comportement actuel (proxy vers Apps Script).
+// ============================================================================
+
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
+const SUPABASE_PUBLISHABLE_KEY = (process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
+const SUPABASE_READ_TIMEOUT_MS = 4000;
+const SUPABASE_PAGE_SIZE = 1000; // PostgREST plafonne à 1000 lignes par requête par défaut.
+
+const isSupabaseConfigured = () => Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+
+// Récupère TOUTES les lignes d'une table, par pages de SUPABASE_PAGE_SIZE (en-tête Range),
+// pour ne jamais tronquer silencieusement au-delà de la limite par défaut de PostgREST.
+async function supabaseSelect(table: string): Promise<any[] | null> {
+  if (!isSupabaseConfigured()) return null;
+  const toutes: any[] = [];
+  let depart = 0;
+  try {
+    for (;;) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), SUPABASE_READ_TIMEOUT_MS);
+      const fin = depart + SUPABASE_PAGE_SIZE - 1;
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, {
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          Range: `${depart}-${fin}`
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (!response.ok && response.status !== 206) return null;
+      const page = await response.json();
+      if (!Array.isArray(page)) return null;
+      toutes.push(...page);
+      if (page.length < SUPABASE_PAGE_SIZE) break;
+      depart += SUPABASE_PAGE_SIZE;
+    }
+    return toutes;
+  } catch (err) {
+    console.warn('[Chantier 2] Lecture Supabase indisponible, repli sur Apps Script :', (err as Error).message);
+    return null;
+  }
+}
+
+// Même logique de normalisation que saasAvisNormaliser_ (Apps Script) : minuscules, sans accents.
+function supaNormaliser(valeur: any): string {
+  if (valeur === null || valeur === undefined) return '';
+  return String(valeur)
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function supaFacette(lignes: any[], champ: string) {
+  const effectifs: Record<string, number> = {};
+  lignes.forEach((a) => {
+    const v = a[champ];
+    if (v === null || v === undefined || v === '') return;
+    effectifs[v] = (effectifs[v] || 0) + 1;
+  });
+  return Object.keys(effectifs)
+    .map((v) => ({ valeur: v, nombre: effectifs[v] }))
+    .sort((x, y) => y.nombre - x.nombre || String(x.valeur).localeCompare(String(y.valeur)));
+}
+
+// Convertit une ligne Supabase (colonnes snake_case) vers la forme attendue par l'interface
+// (identique à ce que renvoie saasAvisSansInterne_ côté Apps Script).
+function supaAvisVersForme(a: any) {
+  return {
+    idAvis: a.id_avis,
+    numeroAvis: a.numero_avis,
+    titre: a.titre,
+    autorite: a.autorite,
+    region: a.region,
+    source: a.source,
+    sourceType: a.source_type,
+    procedure: a.procedure,
+    montant: a.montant,
+    montantTexte: a.montant_texte,
+    dateLimite: a.date_limite,
+    dateLimiteEstimee: a.date_limite_estimee,
+    dateLimiteTexte: a.date_limite_texte,
+    datePublication: a.date_publication,
+    dateCollecte: a.date_collecte,
+    statut: a.statut,
+    lien: a.lien,
+    lienDao: a.lien_dao,
+    typePublication: a.type_publication,
+    attributaire: a.attributaire,
+    montantAttribue: a.montant_attribue,
+    dateAttribution: a.date_attribution,
+    _ligne: a.ligne,
+    _recherche: a.recherche || '',
+    _tsCollecte: a.date_collecte ? new Date(a.date_collecte).getTime() : null,
+    _tsLimite: a.date_limite ? new Date(a.date_limite).getTime() : null,
+    // Le jour de collecte (fuseau Douala) est déjà dans les 10 premiers caractères
+    // de l'ISO stocké (yyyy-MM-ddTHH:mm:ss+01:00) : pas besoin de recalcul de fuseau.
+    _jourCollecte: a.date_collecte ? String(a.date_collecte).slice(0, 10) : null
+  };
+}
+
+// Reproduit fidèlement saasAdminAvisList (SaaS_23_AvisCollectes.gs) : mêmes filtres,
+// même tri, mêmes facettes, même pagination — mais sur la copie Supabase.
+async function tryAdminAvisFromSupabase(query: any) {
+  const lignesBrutes = await supabaseSelect('avis');
+  if (!lignesBrutes) return null;
+  const tous = lignesBrutes.map(supaAvisVersForme);
+
+  const p = query || {};
+  const limit = Math.min(100, Math.max(1, parseInt(p.limit, 10) || 25));
+  const offset = Math.max(0, parseInt(p.offset, 10) || 0);
+
+  function filtreTexte(v: any) {
+    const n = supaNormaliser(v);
+    return (n === '' || n === 'tous') ? '' : n;
+  }
+  const fSource = filtreTexte(p.source);
+  const fStatut = filtreTexte(p.statut);
+  const fType = filtreTexte(p.typePublication);
+  const q = supaNormaliser(p.q);
+  const dateFrom = /^\d{4}-\d{2}-\d{2}$/.test(String(p.dateFrom || '')) ? String(p.dateFrom) : '';
+  const dateTo = /^\d{4}-\d{2}-\d{2}$/.test(String(p.dateTo || '')) ? String(p.dateTo) : '';
+  const sortBy = ['dateCollecte', 'dateLimite', 'montant'].indexOf(String(p.sortBy)) >= 0 ? String(p.sortBy) : 'dateCollecte';
+  const sortOrder = String(p.sortOrder).toLowerCase() === 'asc' ? 'asc' : 'desc';
+
+  const filtres = tous.filter((a: any) => {
+    if (fSource && supaNormaliser(a.source) !== fSource) return false;
+    if (fStatut && supaNormaliser(a.statut) !== fStatut) return false;
+    if (fType && supaNormaliser(a.typePublication) !== fType) return false;
+    if (q && a._recherche.indexOf(q) === -1) return false;
+    if (dateFrom || dateTo) {
+      if (!a._jourCollecte) return false;
+      if (dateFrom && a._jourCollecte < dateFrom) return false;
+      if (dateTo && a._jourCollecte > dateTo) return false;
+    }
+    return true;
+  });
+
+  function valeurTri(a: any) {
+    if (sortBy === 'montant') return a.montant;
+    if (sortBy === 'dateLimite') return a._tsLimite;
+    return a._tsCollecte;
+  }
+  const sens = sortOrder === 'asc' ? 1 : -1;
+  filtres.sort((a: any, b: any) => {
+    const va = valeurTri(a), vb = valeurTri(b);
+    const aNul = (va === null || va === undefined), bNul = (vb === null || vb === undefined);
+    if (aNul && bNul) return (b._ligne || 0) - (a._ligne || 0);
+    if (aNul) return 1;
+    if (bNul) return -1;
+    if (va !== vb) return (va - vb) * sens;
+    return (b._ligne || 0) - (a._ligne || 0);
+  });
+
+  const page = filtres.slice(offset, offset + limit).map((a: any) => {
+    const { _recherche, _tsCollecte, _tsLimite, _jourCollecte, _ligne, ...reste } = a;
+    return reste;
+  });
+
+  return {
+    succes: true,
+    code: 200,
+    message: 'Avis collectés récupérés.',
+    donnees: {
+      total: filtres.length,
+      limit,
+      offset,
+      count: page.length,
+      avis: page,
+      facettes: {
+        sources: supaFacette(tous, 'source'),
+        statuts: supaFacette(tous, 'statut'),
+        typesPublication: supaFacette(tous, 'typePublication')
+      }
+    },
+    timestamp: new Date().toISOString()
+  };
+}
+
+// Convertit une ligne Supabase "alertes_client" vers la forme AdminClientAlertItem attendue.
+function supaAlerteVersForme(al: any) {
+  return {
+    idMatch: al.id_match,
+    _ligne: al.ligne,
+    idAO: al.id_avis,
+    numeroAvis: al.numero_avis,
+    idClient: al.id_client,
+    nomClient: al.nom_client,
+    emailDestinataire: al.email_destinataire,
+    dateMatch: al.date_match,
+    statut: al.statut_pipeline,
+    dateEnvoi: al.date_envoi,
+    score: al.score,
+    justification: al.justification,
+    scoreMots: al.score_mots,
+    scoreIA: al.score_ia,
+    titre: al.titre,
+    maitreOuvrage: al.maitre_ouvrage,
+    region: al.region,
+    montant: al.montant,
+    dateLimite: al.date_limite,
+    lienDetail: al.lien_detail,
+    lienDAO: al.lien_dao
+  };
+}
+
+// Reproduit fidèlement saasAdminClientAlerts (SaaS_20_Admin.gs) sur la copie Supabase.
+async function tryAdminClientAlertsFromSupabase(query: any) {
+  const idClient = String(query?.idClient || '').trim();
+  if (!idClient) return null;
+  const lignesBrutes = await supabaseSelect('alertes_client');
+  if (!lignesBrutes) return null;
+
+  const p = query || {};
+  const statutFiltre = String(p.statut || '').toUpperCase();
+  const scoreMin = p.scoreMin !== undefined ? parseFloat(p.scoreMin) : null;
+  const search = String(p.search || '').toLowerCase();
+  const limit = Math.min(500, Math.max(1, Number(p.limit) || 25));
+  const offset = Math.max(0, Number(p.offset) || 0);
+
+  const alertes = lignesBrutes
+    .filter((al: any) => al.id_client === idClient)
+    .map(supaAlerteVersForme)
+    .filter((al: any) => {
+      if (statutFiltre && statutFiltre !== 'TOUS' && String(al.statut).toUpperCase() !== statutFiltre) return false;
+      if (scoreMin !== null && (Number(al.score) || 0) < scoreMin) return false;
+      if (search) {
+        const hay = `${al.numeroAvis} ${al.titre} ${al.maitreOuvrage} ${al.justification}`.toLowerCase();
+        if (hay.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+
+  // Même tri que saasAdminClientAlerts (dateMatch desc) ; departage par position dans
+  // ALERTES_A_ENVOYER (ascendant) pour reproduire l'ordre d'un tri stable sur le classeur.
+  alertes.sort((a: any, b: any) => {
+    const diff = new Date(b.dateMatch).getTime() - new Date(a.dateMatch).getTime();
+    if (diff !== 0) return diff;
+    return (a._ligne || 0) - (b._ligne || 0);
+  });
+
+  const total = alertes.length;
+  const page = alertes.slice(offset, offset + limit).map((a: any) => { const { _ligne, ...reste } = a; return reste; });
+
+  return {
+    succes: true,
+    code: 200,
+    message: 'Alertes récupérées.',
+    donnees: { total, limit, offset, count: page.length, alertes: page },
+    timestamp: new Date().toISOString()
+  };
+}
+
+app.get('/api/admin/avis', async (req: Request, res: Response) => {
+  if (!(await estAdministrateur(req))) {
+    return res.status(401).json({ succes: false, code: 401, message: 'Authentification administrateur requise.', donnees: null, timestamp: new Date().toISOString() });
+  }
+  try {
+    const rapide = await tryAdminAvisFromSupabase(req.query);
+    if (rapide) return res.json(rapide);
+  } catch (err) {
+    console.warn('[Chantier 2] Echec de la lecture rapide (avis), repli sur Apps Script :', err);
+  }
+  const apiResponse = await forwardToAppsScript(req, '/admin/avis');
+  return res.status(apiResponse.code || 200).json(apiResponse);
+});
+
+app.get('/api/admin/clients/alerts', async (req: Request, res: Response) => {
+  if (!(await estAdministrateur(req))) {
+    return res.status(401).json({ succes: false, code: 401, message: 'Authentification administrateur requise.', donnees: null, timestamp: new Date().toISOString() });
+  }
+  try {
+    const rapide = await tryAdminClientAlertsFromSupabase(req.query);
+    if (rapide) return res.json(rapide);
+  } catch (err) {
+    console.warn('[Chantier 2] Echec de la lecture rapide (alertes), repli sur Apps Script :', err);
+  }
+  const apiResponse = await forwardToAppsScript(req, '/admin/clients/alerts');
+  return res.status(apiResponse.code || 200).json(apiResponse);
+});
+
 // Proxy router for all other /api/* requests
 app.all('/api/*', async (req: Request, res: Response) => {
   const rawSubPath = req.path.replace(/^\/api/, '');
