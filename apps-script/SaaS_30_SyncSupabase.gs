@@ -100,7 +100,7 @@ function saasSupaConstruireLignesAvis_() {
   });
 }
 
-/** Liste les identifiants des clients actifs (onglet CLIENTS, colonne ACTIF = OUI). */
+/** Liste les clients actifs (onglet CLIENTS, colonne ACTIF = OUI), avec nom et e-mail. */
 function saasSupaListerClientsActifs_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const feuille = ss.getSheetByName('CLIENTS');
@@ -109,8 +109,10 @@ function saasSupaListerClientsActifs_() {
   const entetes = saasLireHeader(feuille);
   const idxId = entetes.indexOf('ID_CLIENT');
   const idxActif = entetes.indexOf('ACTIF');
+  const idxNom = entetes.indexOf('NOM_ENTREPRISE');
+  const idxEmail = entetes.indexOf('EMAIL_DESTINATAIRE');
   if (idxId < 0) return [];
-  const ids = [];
+  const clients = [];
   for (let i = 1; i < data.length; i++) {
     const id = (data[i][idxId] || '').toString().trim();
     if (!id) continue;
@@ -118,19 +120,25 @@ function saasSupaListerClientsActifs_() {
       const actif = (data[i][idxActif] || '').toString().trim().toUpperCase();
       if (actif !== 'OUI') continue;
     }
-    ids.push(id);
+    clients.push({
+      idClient: id,
+      nomClient: idxNom >= 0 ? (data[i][idxNom] || '').toString() : '',
+      emailDestinataire: idxEmail >= 0 ? (data[i][idxEmail] || '').toString() : ''
+    });
   }
-  return ids;
+  return clients;
 }
 
 /** Construit les lignes "alertes_client" d'un client (réutilise saasChargerAlertesClient, lecture seule). */
-function saasSupaConstruireLignesAlertesClient_(idClient) {
-  const alertes = saasChargerAlertesClient(idClient);
+function saasSupaConstruireLignesAlertesClient_(client) {
+  const alertes = saasChargerAlertesClient(client.idClient);
   const maintenant = new Date().toISOString();
   return alertes.map(function (al) {
     return {
       id_match: al.idMatch,
-      id_client: idClient,
+      id_client: client.idClient,
+      nom_client: client.nomClient || null,
+      email_destinataire: client.emailDestinataire || null,
       id_avis: al.idAO,
       numero_avis: al.numeroAvis || null,
       date_match: al.dateMatch || null,
@@ -180,9 +188,9 @@ function saasSyncSupabaseTout() {
   resultat.avis = saasSupaEnvoyerParPaquets_('avis', 'id_avis', lignesAvis);
 
   const clients = saasSupaListerClientsActifs_();
-  clients.forEach(function (idClient) {
-    const lignes = saasSupaConstruireLignesAlertesClient_(idClient);
-    resultat.alertes[idClient] = saasSupaEnvoyerParPaquets_('alertes_client', 'id_client,id_match', lignes);
+  clients.forEach(function (client) {
+    const lignes = saasSupaConstruireLignesAlertesClient_(client);
+    resultat.alertes[client.idClient] = saasSupaEnvoyerParPaquets_('alertes_client', 'id_client,id_match', lignes);
   });
 
   resultat.dureeMs = new Date().getTime() - debut;
