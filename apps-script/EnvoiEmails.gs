@@ -1,8 +1,13 @@
 // >>> FICHIER : EnvoiEmails.gs <<< (à coller dans l'onglet du même nom)
 /**
  * ============================================================================
- * SCRIPT 3 : DISTRIBUTION DES ALERTES V7.6
+ * SCRIPT 3 : DISTRIBUTION DES ALERTES V7.7
  * ============================================================================
+ * Nouveauté V7.7 (LOT DATES) : une Date_Limite publiée sans heure reste valable
+ * jusqu'à 23:59 le jour de l'échéance (avis non marqué EXPIRÉ le matin même, aucun
+ * badge FORCLOS). L'heure n'est ni écrite dans la feuille ni affichée au client.
+ * Voir eeEcheance(). Test sans risque (dans Validation.gs) : val2TesterDateSansHeure().
+ *
  * Nouveauté V7.6 (LOT S1a) : tout texte venu de l'extérieur (titre, maître d'ouvrage,
  * procédure, motif et résumé de l'IA, nom du client, adresse de réponse, nom du
  * fichier) est ÉCHAPPÉ avant d'entrer dans le HTML de l'e-mail. Les liens « Consulter
@@ -284,6 +289,23 @@ function eeTesterPlanEnvoi() {
   Logger.log(anomalies === 0 ? "✅ Plan cohérent." : "⚠️ " + anomalies + " anomalie(s) à examiner avant mise en service.");
 }
 
+/**
+ * V7.7 — instant réel d'une échéance. Une date sans heure (ou une cellule Date à
+ * minuit) vaut 23:59:59 le même jour. Renvoie null si la date est illisible.
+ */
+function eeEcheance(dateLimite) {
+  if (dateLimite instanceof Date) {
+    if (isNaN(dateLimite.getTime())) return null;
+    if (dateLimite.getHours() !== 0 || dateLimite.getMinutes() !== 0) return dateLimite;
+    return new Date(dateLimite.getFullYear(), dateLimite.getMonth(), dateLimite.getDate(), 23, 59, 59);
+  }
+  const s = String(dateLimite || "").replace(/^['~]+/, "").trim();
+  const d = parseDateCameroun(s);
+  if (!d) return null;
+  if (/^(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}-\d{2}-\d{2})$/.test(s)) d.setHours(23, 59, 59, 0);
+  return d;
+}
+
 function verifierSiAvisExpire(dateLimiteStr) {
   if (!dateLimiteStr) return false;
   const str = dateLimiteStr.toString().trim();
@@ -298,13 +320,13 @@ function verifierSiAvisExpire(dateLimiteStr) {
     return false;
   }
 
-  const d = parseDateCameroun(str);
+  const d = eeEcheance(dateLimiteStr);
   if (!d) return false;
   return d.getTime() < new Date().getTime();
 }
 
 function calculerJoursRestants(dateLimiteStr) {
-  const d = parseDateCameroun(String(dateLimiteStr || "").replace(/^['~]/, ""));
+  const d = eeEcheance(dateLimiteStr);
   if (!d) return null;
   const diffMs = d.getTime() - new Date().getTime();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));

@@ -1,8 +1,14 @@
 // >>> FICHIER : Validation.gs <<< (à coller dans l'onglet du même nom)
 /**
  * ============================================================================
- * MODULE DE NORMALISATION & VALIDATION DES ENTRÉES — V2.8 (LOT S1b)
+ * MODULE DE NORMALISATION & VALIDATION DES ENTRÉES — V2.9 (LOT DATES)
  * ============================================================================
+ * NOUVEAUTÉ V2.9 (LOT DATES) : une Date_Limite publiée sans heure reste écrite sans
+ * heure (« JJ-MM-AAAA »). Avant, la validation ajoutait « 00:00 », une heure jamais
+ * publiée, et l'alerte était considérée forclose le jour même de l'échéance.
+ * EnvoiEmails.gs (V7.7) traite une date sans heure comme valable toute la journée.
+ * Test sans écriture : val2TesterDateSansHeure().
+ *
  * NOUVEAUTÉ V2.8 (LOT S1b) : les cellules réécrites par la normalisation passent par
  * secNeutraliserFormule (SecuriteDonnees.gs, dont ce script dépend) : un texte qui commence
  * par = + - @ n'est jamais réécrit sous forme de formule. Écriture ciblée (V2.7) inchangée.
@@ -241,7 +247,7 @@ function val2TitleCase(texte) {
 function val2TitleCaseMot(mot, estPremier) {
   if (!mot) return "";
 
-  const bas = mot.toLowerCase().replace(/[''`]/g, "'");
+  const bas = mot.toLowerCase().replace(/['’`]/g, "'");
 
   // 1) Dictionnaire de noms propres (priorité absolue)
   const sansApostrophe = bas.replace(/'/g, "");
@@ -258,7 +264,7 @@ function val2TitleCaseMot(mot, estPremier) {
   }
 
   // 4) Préposition attachée : d'Angossas, l'Extrême
-  const m = /^([dDlL])[''](.+)$/.exec(mot);
+  const m = /^([dDlL])['’](.+)$/.exec(mot);
   if (m) {
     const prefixe = m[1].toLowerCase() + "'";
     const reste = m[2];
@@ -575,6 +581,11 @@ function val2NormaliserMontant(montantBrut) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " " + devise;
 }
 
+/** V2.9 — vrai si le texte ne contient qu'une date (JJ-MM-AAAA, JJ/MM/AAAA ou AAAA-MM-JJ). */
+function val2EstDateSansHeure(texte) {
+  return /^'?(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}-\d{2}-\d{2})$/.test(String(texte || "").trim());
+}
+
 function val2NormaliserDateLimite(dateBrute, datePubBrute, procBrute, typePub) {
   if (dateBrute instanceof Date) {
     if (isNaN(dateBrute.getTime())) return "Non précisée";
@@ -584,6 +595,8 @@ function val2NormaliserDateLimite(dateBrute, datePubBrute, procBrute, typePub) {
       const j = String(dateBrute.getDate()).padStart(2, "0");
       const mo = String(dateBrute.getMonth() + 1).padStart(2, "0");
       const a = dateBrute.getFullYear();
+      // V2.9 : une cellule de type Date à minuit correspond à une date sans heure
+      if (dateBrute.getHours() === 0 && dateBrute.getMinutes() === 0) return j + "-" + mo + "-" + a;
       const h = String(dateBrute.getHours()).padStart(2, "0");
       const mn = String(dateBrute.getMinutes()).padStart(2, "0");
       return j + "-" + mo + "-" + a + " " + h + ":" + mn;
@@ -604,6 +617,8 @@ function val2NormaliserDateLimite(dateBrute, datePubBrute, procBrute, typePub) {
       const j = String(d.getDate()).padStart(2, "0");
       const mo = String(d.getMonth() + 1).padStart(2, "0");
       const a = d.getFullYear();
+      // V2.9 : aucune heure publiée, aucune heure ajoutée
+      if (val2EstDateSansHeure(s)) return j + "-" + mo + "-" + a;
       const h = String(d.getHours()).padStart(2, "0");
       const mn = String(d.getMinutes()).padStart(2, "0");
       return j + "-" + mo + "-" + a + " " + h + ":" + mn;
@@ -1018,4 +1033,54 @@ function val2TesterEcritureCiblee() {
 
   Logger.log("");
   Logger.log("=== RÉSULTAT : " + ok + " contrôle(s) réussi(s), " + ko + " échec(s) ===");
+}
+
+// ---------------------------------------------------------------------------
+// TEST V2.9 — N'ÉCRIT RIEN, N'ENVOIE RIEN, AUCUN APPEL IA
+// ---------------------------------------------------------------------------
+
+/**
+ * Vérifie le traitement des dates limites avec et sans heure (validation et envoi).
+ * À exécuter dans Apps Script : val2TesterDateSansHeure
+ */
+function val2TesterDateSansHeure() {
+  let ok = 0;
+  let ko = 0;
+  const verifier = function (nom, obtenu, attendu) {
+    if (obtenu === attendu) { ok++; Logger.log("✅ " + nom); }
+    else { ko++; Logger.log("❌ " + nom + " | obtenu : " + obtenu + " | attendu : " + attendu); }
+  };
+  const normaliser = function (v) { return val2NormaliserDateLimite(v, "", "AONO", "Appel_Offres"); };
+  const jour = function (decalage) {
+    const d = new Date();
+    d.setDate(d.getDate() + decalage);
+    return Utilities.formatDate(d, "Africa/Douala", "dd-MM-yyyy");
+  };
+
+  Logger.log("=== TEST V2.9 : DATES LIMITES SANS HEURE ===");
+
+  // 1. Validation
+  verifier("JJ-MM-AAAA reste sans heure", normaliser("29-12-2026"), "29-12-2026");
+  verifier("JJ/MM/AAAA devient JJ-MM-AAAA sans heure", normaliser("29/12/2026"), "29-12-2026");
+  verifier("AAAA-MM-JJ devient JJ-MM-AAAA sans heure", normaliser("2026-12-29"), "29-12-2026");
+  verifier("Une heure publiée est conservée", normaliser("29-12-2026 13:00"), "29-12-2026 13:00");
+  verifier("Cellule Date à minuit : sans heure", normaliser(new Date(2026, 11, 29)), "29-12-2026");
+  verifier("Cellule Date avec heure : conservée", normaliser(new Date(2026, 11, 29, 14, 30)), "29-12-2026 14:30");
+  verifier("Deux passages donnent le même résultat", normaliser(normaliser("29-12-2026")), "29-12-2026");
+  verifier("Marché attribué inchangé", normaliser("N/A (Marché attribué)"), "N/A (Marché attribué)");
+  verifier("Date estimée inchangée", normaliser("~29-12-2026 12:00 (Estimée: voir DAO)"), "~29-12-2026 12:00 (Estimée: voir DAO)");
+
+  // 2. Envoi des e-mails
+  verifier("Aujourd'hui sans heure : encore valable", verifierSiAvisExpire(jour(0)), false);
+  verifier("Hier sans heure : forclos", verifierSiAvisExpire(jour(-1)), true);
+  verifier("Demain sans heure : valable", verifierSiAvisExpire(jour(1)), false);
+  verifier("Avant-hier avec heure : forclos", verifierSiAvisExpire(jour(-2) + " 13:00"), true);
+  verifier("Dans deux jours avec heure : valable", verifierSiAvisExpire(jour(2) + " 13:00"), false);
+  verifier("Aujourd'hui sans heure : 1 jour restant", calculerJoursRestants(jour(0)), 1);
+  verifier("Aujourd'hui sans heure : pas de mention FORCLOS", genererBadgeEcheance(jour(0)).indexOf("FORCLOS") === -1, true);
+  verifier("Marché attribué : jamais forclos", verifierSiAvisExpire("N/A (Marché attribué)"), false);
+  verifier("Date estimée d'aujourd'hui : encore valable", verifierSiAvisExpire("~" + jour(0) + " 00:00 (Estimée: voir DAO)"), false);
+
+  Logger.log("=== RÉSULTAT : " + ok + " réussi(s), " + ko + " échec(s) ===");
+  return { ok: ok, ko: ko };
 }
